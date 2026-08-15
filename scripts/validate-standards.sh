@@ -41,6 +41,7 @@ REQUIRED=(
   standards/RELEASES.md
   standards/SECURITY.md
   standards/TESTING.md
+  stacks/ML.md
   stacks/NESTJS.md
   stacks/NODE.md
   stacks/PYTHON.md
