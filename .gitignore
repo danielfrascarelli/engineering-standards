@@ -1,0 +1,16 @@
+# Secrets. Never commit real values. See standards/SECURITY.md
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Editor and OS state. See standards/GIT.md
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Local scratch
+tmp/
+*.log

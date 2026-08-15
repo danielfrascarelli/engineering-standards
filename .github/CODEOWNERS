@@ -1,0 +1,19 @@
+# Code owners for the standards repository.
+#
+# A rule change is a change to how every consuming repo works. It gets an owner review.
+# Review rules: standards/PR.md
+
+# Default owner for everything.
+*                       @danielfrascarelli
+
+# Security rules are never overridable. They always need owner review.
+/standards/SECURITY.md  @danielfrascarelli
+
+# Precedence, ownership map, and rule strength live here. Changing them changes every rule.
+/README.md              @danielfrascarelli
+
+# Agent behavior affects every automated contributor.
+/AGENTS.md              @danielfrascarelli
+
+# Validation contract consumed by every repo's CI.
+/standards/CHECKS.md    @danielfrascarelli
