@@ -26,13 +26,17 @@ if [[ ! -d "$TARGET/.git" ]] && ! git -C "$TARGET" rev-parse --git-dir > /dev/nu
   exit 1
 fi
 
-mkdir -p "$TARGET/.githooks"
+mkdir -p "$TARGET/.githooks/lib"
 
 for hook in commit-msg pre-push; do
   cp "$SRC_DIR/$hook" "$TARGET/.githooks/$hook"
   chmod +x "$TARGET/.githooks/$hook"
   echo "installed: $TARGET/.githooks/$hook"
 done
+
+# Both hooks source the shared trailer pattern from here.
+cp "$SRC_DIR/lib/agent-trailers.sh" "$TARGET/.githooks/lib/agent-trailers.sh"
+echo "installed: $TARGET/.githooks/lib/agent-trailers.sh"
 
 git -C "$TARGET" config core.hooksPath .githooks
 echo "set: core.hooksPath = .githooks"
@@ -42,5 +46,5 @@ cat <<'EOF'
 Hooks are per clone. Every new clone and every new worktree must run this again.
 That is why CI must run the same checks. See standards/GIT.md, "Authorship".
 
-Commit .githooks/ to the repo.
+Commit .githooks/ to the repo, lib/ included.
 EOF

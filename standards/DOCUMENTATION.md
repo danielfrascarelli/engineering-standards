@@ -37,7 +37,7 @@ Repo `AGENTS.md` MUST contain project facts and declared overrides. Shape: [../R
 ## Keeping docs true
 
 - Behavior change MUST update affected docs in the same PR. See [PR.md](PR.md).
-- Doc contradicting code is a defect. Fix or delete it.
+- A doc contradicting the code is a defect. It MUST be fixed or deleted, not left standing.
 - MUST NOT leave a doc describing a removed feature.
 
 ## Comments

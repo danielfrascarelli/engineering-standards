@@ -86,7 +86,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Mo
 - Metrics MUST be recorded in the pull request. See [../standards/PR.md](../standards/PR.md).
 - A regression beyond a stated tolerance MUST block the merge, the same as a failing test.
 - Each deployed model SHOULD have a short model card: source, version, training data provenance, evaluation results, known limitations, and intended use.
-- Absent this, a model or threshold change that degrades accuracy is undetectable until users report it, which for an authentication system means either lockouts or false accepts.
+Note: absent this, a model or threshold change that degrades accuracy is undetectable until users report it, which for an authentication system means either lockouts or false accepts.
 
 ## Testing
 

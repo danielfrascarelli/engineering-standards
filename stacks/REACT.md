@@ -76,7 +76,7 @@ Every piece of state has exactly one home. Picking the wrong one is the main arc
 - MUST NOT store derived state. Compute during render.
 - MUST NOT keep two copies of the same state in sync by hand.
 - Modal-open, active-tab, password-visibility, and preview state MUST NOT be lifted out of the component that owns it.
-- Selector-less store reads are acceptable for rarely-changing state. Fine-grained selectors are added when a measurement shows a render problem, not before.
+- Selector-less store reads MAY be used for rarely-changing state. Fine-grained selectors SHOULD be added when a measurement shows a render problem, not before.
 
 ## Data fetching
 
@@ -167,7 +167,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 
 ## Environment and config
 
-- `.env.example` MUST be committed listing every variable the app reads, with its default and the module that consumes it. `.gitignore` covers `.env*` with an exception for the example. See [../standards/SECURITY.md](../standards/SECURITY.md).
+- The environment template required by [../standards/SECURITY.md](../standards/SECURITY.md) MUST list every variable the app reads, with its default and the module that consumes it. `.gitignore` MUST cover `.env*` with an exception for the template.
 - Environment variables MUST be read in exactly one module, exporting the resolved value as a named constant. MUST NOT sprinkle `import.meta.env` through components.
 
 ## Testing
@@ -181,7 +181,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 - Environment polyfills the component library needs — pointer capture, `scrollIntoView`, `matchMedia`, `ResizeObserver` — MUST live in the shared setup file, each with a comment saying why, and global stubs MUST be unstubbed in `afterEach`.
 - The network MUST be stubbed at the HTTP boundary, not by mocking the component's own module.
 - Coverage thresholds MUST be set in the test config **and** the coverage command MUST run in CI. Measuring coverage without a threshold enforces nothing.
-- Minimum coverage of behavior: every store transition, every schema rule, each wrapper's mapping onto its primitive, and one end-to-end form path through resolver and network.
+- Tests MUST cover, at minimum: every store transition, every schema rule, each wrapper's mapping onto its primitive, and one end-to-end form path through resolver and network.
 - The provider chain and every guard redirect MUST be smoke-tested at the app root. A missing provider otherwise only surfaces at runtime.
 - End-to-end tests SHOULD cover critical user flows only.
 

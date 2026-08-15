@@ -63,7 +63,7 @@ Commands: [../standards/CHECKS.md](../standards/CHECKS.md).
 
 - Configuration MUST be read through one typed, validated settings object, not scattered `os.getenv` calls.
 - Missing required configuration MUST fail fast and loudly, with a message naming the variable. Two config paths in one service — one crashing at import, the other string-interpolating a missing host into a connection URL that only fails at connect time — is worse than either alone.
-- `.env.example` MUST be committed listing every required variable with placeholder values. CI SHOULD verify it covers everything the code reads. See [../standards/SECURITY.md](../standards/SECURITY.md).
+- A project that reads environment variables MUST commit the template file required by [../standards/SECURITY.md](../standards/SECURITY.md), listing every required variable with a placeholder value. CI SHOULD verify it covers everything the code reads.
 - A variable declared in `.env` that no code reads MUST be removed. A variable the code reads that appears in no `.env` and no pipeline MUST be added.
 - Filesystem paths for runtime assets MUST be configurable. MUST NOT hardcode absolute container paths.
 - A secret-scanning pre-commit hook SHOULD be installed. A single `.gitignore` line is the only thing standing between a working-tree credential and history.

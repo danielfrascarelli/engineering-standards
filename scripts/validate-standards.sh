@@ -6,7 +6,19 @@
 #   1. a required standards file is missing;
 #   2. a relative markdown link does not resolve;
 #   3. a stack document is missing a mandated section, or has them out of order;
-#   4. the sync script cannot run.
+#   4. the sync script cannot run;
+#   5. a reference hook is not executable;
+#   6. the installed .githooks/ copy has drifted from scripts/hooks/;
+#   7. a commit carries the wrong identity or an agent trailer;
+#   8. a trailer fixture no longer behaves as specified.
+#
+# Usage:
+#   scripts/validate-standards.sh [--range <base>..<head>]
+#
+#   --range   Restrict the authorship checks to the commits introduced by this
+#             push or pull request. Without it every commit is scanned, which
+#             is right for this repo and wrong for a repo adopting the rule
+#             after it already has history.
 #
 # Run locally before pushing. CI runs the same script.
 #
@@ -14,6 +26,20 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+# shellcheck source=hooks/lib/agent-trailers.sh
+source "$ROOT/scripts/hooks/lib/agent-trailers.sh"
+
+RANGE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --range) RANGE="${2:-}"; shift 2 ;;
+    -h|--help)
+      echo "Usage: validate-standards.sh [--range <base>..<head>]"
+      exit 0 ;;
+    *) echo "validate-standards: unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
 
 FAILURES=0
 
@@ -47,12 +73,22 @@ REQUIRED=(
   stacks/PYTHON.md
   stacks/REACT.md
   tooling/PLUGINS.md
+  docs/workspace-setup.md
   scripts/sync-standards.sh
+  scripts/validate-consumer-standards.sh
+  scripts/check-pr-body.sh
+  scripts/test-agent-trailers.sh
   scripts/hooks/commit-msg
   scripts/hooks/pre-push
   scripts/hooks/install.sh
+  scripts/hooks/lib/agent-trailers.sh
+  .githooks/commit-msg
+  .githooks/pre-push
+  .githooks/lib/agent-trailers.sh
   .github/CODEOWNERS
   .github/pull_request_template.md
+  .github/workflows/validate-standards.yml
+  .github/workflows/validate-consumer-standards.example.yml
 )
 
 missing=0
@@ -132,43 +168,111 @@ else
   fi
 fi
 
-# ---------------------------------------------------------------- 5. hooks executable
+# ---------------------------------------------------------------- 5. scripts executable
 
-hook_failures=0
-for hook in scripts/hooks/commit-msg scripts/hooks/pre-push scripts/hooks/install.sh; do
-  [[ -x "$hook" ]] || { fail "$hook is not executable"; hook_failures=$((hook_failures + 1)); }
+exec_failures=0
+for script in \
+  scripts/hooks/commit-msg \
+  scripts/hooks/pre-push \
+  scripts/hooks/install.sh \
+  scripts/check-pr-body.sh \
+  scripts/test-agent-trailers.sh \
+  scripts/validate-consumer-standards.sh
+do
+  [[ -x "$script" ]] || { fail "$script is not executable"; exec_failures=$((exec_failures + 1)); }
 done
-[[ "$hook_failures" -eq 0 ]] && pass "reference hooks are executable"
+[[ "$exec_failures" -eq 0 ]] && pass "reference hooks and scripts are executable"
 
-# ---------------------------------------------------------------- 6. authorship
+# ---------------------------------------------------------------- 6. hook copies match
 #
-# Hooks are per clone and opt-in, so the same two checks run here. See
+# scripts/hooks/ is the reference implementation. .githooks/ is this repo's
+# installed copy. Two copies that nothing compares drift silently.
+
+mirror_failures=0
+for rel in commit-msg pre-push lib/agent-trailers.sh; do
+  if [[ ! -e ".githooks/$rel" ]]; then
+    fail ".githooks/$rel is missing. Run scripts/hooks/install.sh."
+    mirror_failures=$((mirror_failures + 1))
+  elif ! cmp -s "scripts/hooks/$rel" ".githooks/$rel"; then
+    fail ".githooks/$rel differs from scripts/hooks/$rel. Run scripts/hooks/install.sh."
+    mirror_failures=$((mirror_failures + 1))
+  fi
+done
+[[ "$mirror_failures" -eq 0 ]] && pass "installed .githooks/ matches the reference hooks"
+
+# ---------------------------------------------------------------- 7. authorship
+#
+# Hooks are per clone and opt-in, so the same checks run here. See
 # standards/GIT.md, "Authorship".
 
-DECLARED_EMAIL="$(sed -nE 's/^[[:space:]]*-?[[:space:]]*user\.email:[[:space:]]*(.+)[[:space:]]*$/\1/p' AGENTS.md | head -1)"
+read_declared() {
+  sed -nE "s/^[[:space:]]*-?[[:space:]]*$1:[[:space:]]*(.+)[[:space:]]*$/\1/p" AGENTS.md | head -1
+}
 
-if [[ -z "$DECLARED_EMAIL" ]]; then
-  fail "AGENTS.md declares no 'user.email:'. Add a Git identity block."
+DECLARED_EMAIL="$(read_declared 'user\.email')"
+DECLARED_NAME="$(read_declared 'user\.name')"
+
+# A merge performed by the hosting platform rewrites the committer, never the
+# author. Allow those committers; the author check still applies.
+committer_allowed() {
+  case "$1" in
+    "$DECLARED_EMAIL") return 0 ;;
+    noreply@github.com|*@users.noreply.github.com) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+if [[ -z "$DECLARED_EMAIL" || -z "$DECLARED_NAME" ]]; then
+  fail "AGENTS.md must declare both 'user.name:' and 'user.email:'. Add a Git identity block."
 elif ! git rev-parse --git-dir > /dev/null 2>&1; then
   echo "skip: not a git repository, authorship checks not run"
 else
-  bad_authors="$(git log --format='%H %ae' | awk -v want="$DECLARED_EMAIL" '$2 != want {print $1" "$2}')"
-  if [[ -n "$bad_authors" ]]; then
-    while read -r sha email; do
-      [[ -z "$sha" ]] && continue
-      fail "${sha:0:8} authored by <$email>, expected <$DECLARED_EMAIL>"
-    done <<< "$bad_authors"
+  if [[ -n "$RANGE" ]]; then
+    log_args=("$RANGE")
+    scope="commits in $RANGE"
   else
-    pass "every commit carries the declared identity <$DECLARED_EMAIL>"
+    log_args=(HEAD)
+    scope="every commit"
   fi
 
-  # Anchored to line start on purpose. A trailer is a line; an unanchored match
-  # would also reject a commit that documents this very rule in prose.
-  if git log --format='%B' | grep -qiE '^[[:space:]]*(Co-Authored-By:.*(claude|copilot|cursor|codex|gpt|gemini|anthropic|openai)|Claude-Session:|Generated with .*(Claude|Copilot|Cursor|Codex)|https?://claude\.ai/code)'; then
-    fail "history contains an AI-agent trailer or session link. See standards/GIT.md 'Authorship'."
+  if ! commits="$(git log --format='%H%x09%an%x09%ae%x09%ce' "${log_args[@]}" 2>/dev/null)"; then
+    fail "cannot resolve commit range: ${log_args[*]}"
   else
-    pass "history carries no agent trailers"
+    identity_failures=0
+    while IFS=$'\t' read -r sha author_name author_email committer_email; do
+      [[ -z "$sha" ]] && continue
+      if [[ "$author_email" != "$DECLARED_EMAIL" ]]; then
+        fail "${sha:0:8} authored by <$author_email>, expected <$DECLARED_EMAIL>"
+        identity_failures=$((identity_failures + 1))
+      fi
+      if [[ "$author_name" != "$DECLARED_NAME" ]]; then
+        fail "${sha:0:8} author name '$author_name', expected '$DECLARED_NAME'"
+        identity_failures=$((identity_failures + 1))
+      fi
+      if ! committer_allowed "$committer_email"; then
+        fail "${sha:0:8} committed by <$committer_email>, expected <$DECLARED_EMAIL>"
+        identity_failures=$((identity_failures + 1))
+      fi
+    done <<< "$commits"
+
+    [[ "$identity_failures" -eq 0 ]] && \
+      pass "$scope: declared identity $DECLARED_NAME <$DECLARED_EMAIL>"
+
+    if git log --format='%B' "${log_args[@]}" | agent_trailers_present; then
+      fail "$scope: an AI-agent trailer or session link is present. See standards/GIT.md 'Authorship'."
+      git log --format='%B' "${log_args[@]}" | agent_trailers_show >&2 || true
+    else
+      pass "$scope: no agent trailers"
+    fi
   fi
+fi
+
+# ---------------------------------------------------------------- 8. trailer fixtures
+
+if ./scripts/test-agent-trailers.sh > /dev/null 2>&1; then
+  pass "agent-trailer fixtures behave as specified"
+else
+  fail "scripts/test-agent-trailers.sh failed. Run it directly for the detail."
 fi
 
 # ----------------------------------------------------------------

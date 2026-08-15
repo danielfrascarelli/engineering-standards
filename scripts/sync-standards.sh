@@ -57,11 +57,39 @@ FILES=(
   AGENTS.md
   README.md
 )
+# docs/ is copied so the links out of tooling/ and README.md still resolve in the
+# consuming repo. Nothing in docs/ is normative; it says so in its own first line.
 while IFS= read -r f; do FILES+=("$f"); done < <(
-  find standards stacks tooling -name '*.md' -type f | sort
+  find standards stacks tooling docs -name '*.md' -type f | sort
 )
 
 DEST_ROOT="$TARGET/$DEST_NAME"
+
+# The central AGENTS.md carries a "This repository" block declaring THIS repo's
+# git identity. Copying it forward gives the consumer two identity blocks and a
+# stale one wins as often as not. The block is replaced with a pointer to the
+# consumer's own root AGENTS.md, which is the only authoritative declaration.
+# See standards/GIT.md, "Authorship".
+emit_body() {
+  local rel="$1"
+  if [[ "$rel" != "AGENTS.md" ]]; then
+    cat "$rel"
+    return
+  fi
+  awk '
+    /^##[[:space:]]+This repository[[:space:]]*$/ {
+      print "## This repository"
+      print ""
+      print "The git identity for commits lives in the consuming repository’s own root"
+      print "`AGENTS.md`, never in this generated copy. See [standards/GIT.md](standards/GIT.md),"
+      print "\"Authorship\"."
+      skipping = 1
+      next
+    }
+    /^##[[:space:]]/ { skipping = 0 }
+    !skipping { print }
+  ' "$rel"
+}
 
 for rel in "${FILES[@]}"; do
   out="$DEST_ROOT/$rel"
@@ -73,7 +101,7 @@ for rel in "${FILES[@]}"; do
   {
     echo "<!-- GENERATED FILE. DO NOT EDIT DIRECTLY. Source: engineering-standards@${REV} -->"
     echo
-    cat "$rel"
+    emit_body "$rel"
   } > "$out"
   echo "wrote: $out"
 done
