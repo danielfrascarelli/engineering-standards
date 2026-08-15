@@ -6,9 +6,10 @@ Shared JavaScript and TypeScript rules live in [NODE.md](NODE.md). This file cov
 
 ## Runtime and version
 
-- Build tool MUST be Vite for a client-only application. MUST NOT introduce Next.js, CRA, or another server-rendering framework into an app with no SEO and no SSR requirement.
-- Node version for build and tooling MUST be pinned. See [NODE.md](NODE.md).
-- Pinning through a tool-version manager alone is not enough. `.nvmrc` and `engines.node` MUST also be present, so a contributor not using that manager still gets a signal.
+- Each repo MUST declare its build and runtime architecture in its README: which build tool, and whether the app renders on the client only or on a server. A React change MUST use the declared toolchain.
+- Changing that architecture MUST go through a decision record. See [../standards/DOCUMENTATION.md](../standards/DOCUMENTATION.md). It is a repo-level choice driven by SEO, rendering, and deployment target, not a consequence of using React, so this file does not make it.
+- Vite SHOULD be the build tool for a client-only application. A server-rendering framework SHOULD be chosen only where SSR or SEO is an actual requirement, since it brings a server to operate.
+- Node version for build and tooling MUST be pinned. Rule owner: [NODE.md](NODE.md).
 - React major version MUST be stated in the README. Bumping it is a MAJOR change for the app. See [../standards/RELEASES.md](../standards/RELEASES.md).
 
 ## Language and types
@@ -163,7 +164,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 - `<html lang>` MUST match the language the UI actually renders. A Spanish UI served as `lang="en"` breaks screen readers and is easy to miss because nothing visibly fails.
 - An app with persistent sidebar navigation SHOULD ship a skip-to-content link.
 - User-facing copy SHOULD route through an internationalization layer from the first screen. Retrofitting hardcoded strings is the expensive path.
-- Code, comments, and commit messages are English. User-facing copy is the product language. See [../standards/GIT.md](../standards/GIT.md).
+- Language is not a React concern and is not defined here. Commit messages: [../standards/GIT.md](../standards/GIT.md). Documentation and prose: [../standards/DOCUMENTATION.md](../standards/DOCUMENTATION.md). Code comments and user-facing copy: the repo's own `AGENTS.md`.
 
 ## Environment and config
 
