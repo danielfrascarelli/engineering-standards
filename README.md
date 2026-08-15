@@ -22,10 +22,10 @@ engineering-standards/
 │   ├── SECURITY.md               # mandatory security rules
 │   └── TESTING.md                # test strategy
 ├── stacks/
-│   ├── ML.md
 │   ├── NESTJS.md
 │   ├── NODE.md
 │   ├── PYTHON.md
+│   ├── PYTHON_ML.md              # extends PYTHON.md, for services that ship a model
 │   └── REACT.md
 ├── tooling/
 │   └── PLUGINS.md                # approved tools and agent plugins
@@ -175,7 +175,7 @@ Git identity (see .standards/standards/GIT.md, "Authorship"):
 
 - `services/api/**`: NODE
 - `apps/web/**`: NODE, REACT
-- `services/ml/**`: PYTHON, ML
+- `services/ml/**`: PYTHON, PYTHON_ML
 - Root dependency and lock files: DEPENDENCIES
 - CI and workflow files: CHECKS, GIT, DELIVERY
 - Auth, secrets, external input, crypto, wherever they live: SECURITY

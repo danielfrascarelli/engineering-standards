@@ -151,7 +151,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 - Session state MUST be cleared in the mutation's settled callback, not its success callback, so a failed logout request still logs the user out locally. The query cache is cleared alongside it.
 - A token acquired without a successfully loaded profile MUST be treated as a half-open session and dropped.
 - A fixture or mock login path that produces an authenticated session without a real credential MUST NOT ship. Gate it behind a build flag or delete it.
-- Every client-side environment variable is public and is inlined into the bundle. MUST NOT put a secret in one, whatever the prefix. `.env.example` MUST say so.
+- Every client-side environment variable is public and is inlined into the bundle. MUST NOT put a secret in one, whatever the prefix. The environment template MUST say so.
 - MUST NOT use `dangerouslySetInnerHTML` with unsanitized content.
 - A client-side route guard is a UX affordance, not authorization. The server MUST enforce it.
 

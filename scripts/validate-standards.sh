@@ -67,10 +67,10 @@ REQUIRED=(
   standards/RELEASES.md
   standards/SECURITY.md
   standards/TESTING.md
-  stacks/ML.md
   stacks/NESTJS.md
   stacks/NODE.md
   stacks/PYTHON.md
+  stacks/PYTHON_ML.md
   stacks/REACT.md
   tooling/PLUGINS.md
   docs/workspace-setup.md

@@ -58,7 +58,7 @@ Commands: [../standards/CHECKS.md](../standards/CHECKS.md).
 - `ConfigModule.forRoot()` MUST be imported exactly once, in the root module. MUST NOT be re-imported in a feature module, and `ConfigService` MUST NOT be listed as a feature provider. Either creates a second, non-root instance.
 - Every variable name MUST be declared once in a single `EnvNames` const and referenced as a computed key in the schema. A typo then cannot create an unvalidated variable.
 - Config MUST be read only through `ConfigService.get(EnvNames.X)`. The only permitted `process.env` reads are `main.ts` and pre-DI bootstrap files, each with an inline comment stating why.
-- A new variable MUST land in `EnvNames`, the validation schema, and `.env.example` in the same commit.
+- A new variable MUST land in `EnvNames`, the validation schema, and the environment template in the same commit. Which template file, and when a repo needs one: [../standards/SECURITY.md](../standards/SECURITY.md).
 - Secrets MUST be required in production. They MAY be optional in development, through one named schema helper.
 - MUST NOT ship a placeholder default for a signing key that is valid outside production. A `NODE_ENV=development` deploy then boots with a publicly known key.
 - Optional integration MUST no-op cleanly when its variable is unset. Local development, tests, and CI MUST NOT require an external service.
