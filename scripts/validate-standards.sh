@@ -33,6 +33,7 @@ REQUIRED=(
   README.md
   standards/CHECKS.md
   standards/CONTRIBUTING.md
+  standards/DELIVERY.md
   standards/DEPENDENCIES.md
   standards/DOCUMENTATION.md
   standards/GIT.md

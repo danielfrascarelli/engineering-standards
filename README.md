@@ -13,6 +13,7 @@ engineering-standards/
 ├── standards/
 │   ├── CHECKS.md                 # canonical validation check names
 │   ├── CONTRIBUTING.md           # contributor workflow
+│   ├── DELIVERY.md               # CI pipeline, containers, deploy safety
 │   ├── DEPENDENCIES.md           # dependency intake, licenses, pinning, patching
 │   ├── DOCUMENTATION.md          # documentation rules
 │   ├── GIT.md                    # branches, commits, merge, protected branches
@@ -64,6 +65,7 @@ One topic, one owner file. Other files link. They MUST NOT restate.
 | Topic | Owner |
 | --- | --- |
 | Check names, when checks run | [standards/CHECKS.md](standards/CHECKS.md) |
+| CI pipeline shape, gate integrity, containers, deploy safety | [standards/DELIVERY.md](standards/DELIVERY.md) |
 | Secrets, authorization, crypto, log redaction | [standards/SECURITY.md](standards/SECURITY.md) |
 | Dependency intake, licenses, pinning, vulnerability patching | [standards/DEPENDENCIES.md](standards/DEPENDENCIES.md) |
 | Branches, commit format, merge, protected branches | [standards/GIT.md](standards/GIT.md) |

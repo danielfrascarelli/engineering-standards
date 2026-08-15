@@ -209,12 +209,9 @@ Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md)
 
 ## CI
 
-- The PR workflow MUST run, in order: install, dependency audit, lint, build, contract drift, migrate, seed, `test:all`. Running tests alone is not a gate.
-- CI MUST use the lockfile install (`npm ci`), never `npm install`, in every job including deploy.
-- CI MUST run against a real database service container with a health probe.
-- `concurrency` with `cancel-in-progress: true` MUST be set on PR workflows.
-- The audit gate's scope MUST be documented. If it fires, fix the dependency. MUST NOT widen the level and MUST NOT append `|| true`.
-- Dependabot or Renovate MUST be configured, grouped, weekly, targeting the integration branch. See [../standards/DEPENDENCIES.md](../standards/DEPENDENCIES.md).
-- A `Dockerfile` MUST have a runtime stage with an explicit `CMD`, a non-root `USER`, and no environment file copied into any layer. A build-only Dockerfile with no `CMD` is not a deployable image.
-- `.dockerignore` MUST match the actual stack and MUST exclude at least `node_modules`, `dist`, `.git`, and env files.
-- Proxy body limit and application body limit MUST agree, and the authoritative one MUST be stated.
+Pipeline shape, gate integrity, containers, and deploy safety are owned by [../standards/DELIVERY.md](../standards/DELIVERY.md). NestJS additions:
+
+- The PR pipeline MUST include two extra steps between build and test: the OpenAPI contract-drift check, then migrate and seed against the test database.
+- Contract drift MUST be checked by regenerating `openapi.json` and failing on a diff.
+- `npm ci` is the lockfile install this stack MUST use.
+- The database service container required by DELIVERY.md MUST be the same engine and major version as production. An integration suite passing against a different engine proves less than it appears to.
