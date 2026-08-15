@@ -22,7 +22,7 @@ security
 ```
 
 - Check names are owned by [CHECKS.md](CHECKS.md) and MUST NOT be renamed or replaced here. A pipeline step called "dependency audit" is not a canonical name, and naming it that hides the fact that `security` also has to run a secret scanner: the audit half passes, the scan half never runs, and the pipeline reads as complete.
-- This file owns the *order*. CHECKS.md lists the checks required at each moment and does not order them.
+- The order above MUST NOT be redefined by a stack document. Note: CHECKS.md lists which checks are required at each moment and does not order them; ordering is owned here.
 - A stack-specific step MAY be inserted after the canonical check it depends on. It MUST NOT replace one.
 
 - Running tests alone MUST NOT be treated as CI. A pipeline that runs only tests leaves lint, types, and build unguarded.
