@@ -180,7 +180,6 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 - Module-singleton stores MUST be reset in `beforeEach`. Store state survives between tests otherwise, and the failure looks like a test-ordering bug.
 - Environment polyfills the component library needs — pointer capture, `scrollIntoView`, `matchMedia`, `ResizeObserver` — MUST live in the shared setup file, each with a comment saying why, and global stubs MUST be unstubbed in `afterEach`.
 - The network MUST be stubbed at the HTTP boundary, not by mocking the component's own module.
-- Coverage thresholds MUST be set in the test config **and** the coverage command MUST run in CI. Measuring coverage without a threshold enforces nothing.
 - Tests MUST cover, at minimum: every store transition, every schema rule, each wrapper's mapping onto its primitive, and one end-to-end form path through resolver and network.
 - The provider chain and every guard redirect MUST be smoke-tested at the app root. A missing provider otherwise only surfaces at runtime.
 - End-to-end tests SHOULD cover critical user flows only.
