@@ -31,7 +31,6 @@ src/observability/        tracing and error reporting, loaded before DI exists
 
 - Dependency direction MUST be `modules` to `data` to ORM. `common/` is importable from anywhere.
 - Feature module MUST NOT inject the ORM client directly. It goes through an accessor in `src/data/`. Health checks are the usual carve-out, and the carve-out MUST be written down where the rule is stated.
-- A rule expressed as "this grep must return nothing" MUST actually run in CI, or be rewritten as a lint boundary rule. An invariant nobody executes is already false.
 - File name MUST be `<subject>.<role>.ts`, kebab-case. Roles: `.module.ts`, `.controller.ts`, `.service.ts`, `.dto.ts`, `.guard.ts`, `.interceptor.ts`, `.decorator.ts`, `.gateway.ts`, `.mapper.ts`, `.accessor.ts`, `.health-indicator.ts`.
 - One casing convention repo-wide. `LoginRequest.dto.ts` sitting beside `register.ts` MUST NOT happen.
 - Class suffix MUST match the file suffix.
@@ -45,7 +44,7 @@ src/observability/        tracing and error reporting, loaded before DI exists
 
 ## Lint and format
 
-- `lint` MUST be check-only, with `--max-warnings 0`. A `lint` script carrying `--fix` cannot fail CI on anything auto-fixable, and in CI it silently repairs files whose fixes never reach the branch. Provide `lint:fix` separately.
+- Gate integrity, including check-only lint and `--max-warnings 0`: [../standards/DELIVERY.md](../standards/DELIVERY.md). NestJS adds `lint:fix` as the separate mutating command.
 - Type-aware linting MUST be enabled: `projectService: true` with `tsconfigRootDir`.
 - Formatting SHOULD be enforced through the linter, so one command gates style and correctness together.
 - Husky MUST be installed via `prepare`. `pre-commit` runs lint-staged, `commit-msg` runs commitlint.
@@ -134,7 +133,6 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Ne
 - CORS MUST come from an env-driven allowlist, with the same list passed to the WebSocket adapter. `origin: true` or `*` combined with `credentials: true` MUST NOT be used.
 - The rate-limit guard MUST be global, backed by a shared store when more than one instance runs. It MUST stay active in the test environment, or no test ever covers it.
 - Swagger UI MUST NOT be served unauthenticated in production.
-- Deploy scripts MUST NOT print an environment file. `cat .env` puts every production secret into the deployment log.
 
 ## Persistence
 
@@ -191,7 +189,6 @@ Three levels, distinct non-overlapping suffixes:
 
 - Suffixes MUST be chosen so the unit `testRegex` cannot match the other two.
 - `test:all` MUST run all three in sequence. "Tests pass" means `test:all`, not unit only.
-- Every level MUST run in CI. A suite excluded from CI because it binds a socket only ever ran on one laptop.
 - Database-touching suites MUST be guarded twice: a setup file that throws unless the test database URL is set and identifiable, and a per-spec explicit datasource URL. Ambient `.env` MUST NOT be trusted. A mistake here truncates the development database.
 - Test data MUST be cleared in explicit foreign-key-safe order by a shared helper. MUST NOT rely on cascade or on test ordering.
 - Integration and e2e suites MUST use one shared harness that replays the production bootstrap in the same order.
@@ -201,11 +198,10 @@ Three levels, distinct non-overlapping suffixes:
 - Unit tests SHOULD construct the class directly with `jest.fn()` collaborators. Reserve `Test.createTestingModule` for tests that genuinely need the container.
 - A controller unit test SHOULD assert delegation only. Business assertions belong in the service spec.
 - A test app that cannot start MUST throw, never skip. A silently skipped suite is a false green.
-- Coverage threshold MUST be set in the Jest config **and** a coverage-enabled command MUST run in CI. A threshold CI never executes is not a gate.
 - `collectCoverageFrom` SHOULD exclude `*.module.ts`, `*.dto.ts`, `main.ts`, and test files.
 - An out-of-scope bug found mid-task SHOULD be recorded in a findings document and pinned with a test asserting the current behavior, so the eventual fix fails loudly. See [../standards/DOCUMENTATION.md](../standards/DOCUMENTATION.md).
 
-Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md).
+Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md). Coverage threshold as a gate, and which suites CI runs: [../standards/DELIVERY.md](../standards/DELIVERY.md).
 
 ## CI
 

@@ -9,22 +9,26 @@ Check names and commands: [CHECKS.md](CHECKS.md).
 ## Continuous integration
 
 - Every repo MUST have a CI workflow triggered on push and on pull request. A convention that a human runs a command locally before committing is not a gate.
-- The workflow MUST run, in order, failing fast at each step:
+- The workflow MUST run the canonical checks, in this order, failing fast at each step:
 
 ```text
-install (from lockfile)
-dependency audit
-format check
+install          from the lockfile. Not a check; the prerequisite for all of them.
+format
 lint
 typecheck
 build
 test
+security
 ```
+
+- Check names are owned by [CHECKS.md](CHECKS.md) and MUST NOT be renamed or replaced here. A pipeline step called "dependency audit" is not a canonical name, and naming it that hides the fact that `security` also has to run a secret scanner: the audit half passes, the scan half never runs, and the pipeline reads as complete.
+- This file owns the *order*. CHECKS.md lists the checks required at each moment and does not order them.
+- A stack-specific step MAY be inserted after the canonical check it depends on. It MUST NOT replace one.
 
 - Running tests alone MUST NOT be treated as CI. A pipeline that runs only tests leaves lint, types, and build unguarded.
 - Install MUST use the lockfile-respecting command, in every job including deploy. A resolving install in a deploy job ships dependencies nobody reviewed.
 - Every test level the repo defines MUST run in CI. A suite excluded because it binds a socket or needs a database has, in practice, only ever run on one machine.
-- CI MUST provide the real dependencies the tests need — a database service container with a health probe, not a mock.
+- When tests require a database or another external dependency, CI MUST provide the same dependency class and a compatible version, through a service container with a health probe or a managed test environment, not a mock. Tests that need no such dependency MUST NOT carry an unused container: a static site, a CLI, and a library without persistence have nothing to probe.
 - Coverage MUST be measured by a command CI actually executes. A threshold configured in a file that no pipeline step passes `--coverage` to is not a gate.
 - `concurrency` with cancel-in-progress MUST be set on pull request workflows.
 - Every workflow MUST declare an explicit least-privilege permissions block.
@@ -59,7 +63,7 @@ test
 
 ## Dependency automation
 
-- Automated dependency updates MUST be configured, grouped, on a fixed schedule, targeting the integration branch. See [DEPENDENCIES.md](DEPENDENCIES.md).
+- Automated dependency updates MUST be configured, grouped, on a fixed schedule, targeting `develop`. Branch roles: [GIT.md](GIT.md). Intake rules: [DEPENDENCIES.md](DEPENDENCIES.md).
 
 ## Task runners
 
