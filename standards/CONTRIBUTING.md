@@ -1,34 +1,44 @@
 # Contributing Standards
 
+Owner: contributor workflow, from task to merged change.
+
+Applies to humans and agents. Agents follow this file, then add the duties in [../AGENTS.md](../AGENTS.md).
+
 ## Before starting
 
-- Read the project README.
-- Read local contribution rules.
-- Read applicable central engineering standards.
-- Confirm the task scope.
+1. Read repo `README.md`.
+2. Read repo `AGENTS.md` for project facts and declared overrides.
+3. Read central standards relevant to the change. Ownership map: [../README.md](../README.md).
+4. Confirm task scope. Ambiguous? Ask before building.
 
-## Development workflow
+## Workflow
 
-1. Create or select the appropriate branch.
-2. Make the smallest coherent change.
-3. Add or update tests.
-4. Run required validation.
-5. Update documentation when behavior changes.
-6. Open a focused pull request.
+1. Branch off `main` with the right prefix. See [GIT.md](GIT.md).
+2. Make smallest coherent change.
+3. Add or update tests. See [TESTING.md](TESTING.md).
+4. Update docs when behavior changes. See [DOCUMENTATION.md](DOCUMENTATION.md).
+5. Run required checks. See [CHECKS.md](CHECKS.md).
+6. Open a focused pull request. See [PR.md](PR.md).
+
+Steps 3, 4, 5 are MUST. Skipping one needs a stated reason in the PR description.
 
 ## Code quality
 
-Contributions should:
+Contribution MUST:
 
 - follow existing architecture;
-- avoid duplicated logic;
 - keep public interfaces intentional;
 - use clear names;
-- avoid unnecessary abstractions;
-- preserve compatibility unless explicitly changing it.
+- preserve compatibility unless the task explicitly changes it.
+
+Contribution MUST NOT:
+
+- duplicate existing logic;
+- add abstraction with a single caller and no planned second;
+- leave dead code or commented-out code.
 
 ## Review
 
-Address review comments by changing the code when appropriate, or explain the technical reason for keeping the implementation.
-
-Do not resolve review threads without addressing their substance.
+- Address a review comment by changing code, or by stating the technical reason for keeping it.
+- MUST NOT resolve a review thread without addressing its substance.
+- Disagreement that survives one round goes to the code owner. See [PR.md](PR.md).

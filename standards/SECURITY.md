@@ -1,10 +1,12 @@
 # Security Standards
 
-Security rules are mandatory and override convenience or local style preferences.
+Owner: secrets, input handling, authorization, cryptography, log redaction.
+
+MUST rules in this file are never overridable. No repo-level exception, no convenience exception, no style preference. See precedence in [../README.md](../README.md).
 
 ## Secrets
 
-Never commit:
+MUST NOT commit:
 
 - passwords;
 - API keys;
@@ -13,54 +15,71 @@ Never commit:
 - private keys;
 - certificates containing private material;
 - production credentials;
-- `.env` files containing secrets.
+- any file containing a real secret value.
 
-Use environment variables or an approved secret manager.
+Read secrets from environment variables or an approved secret manager. MUST.
 
-If a secret is exposed:
+Example files: `.env.example` and `.env.template` MUST be committed and MUST contain placeholder values only. A real value in an example file is a leaked secret.
 
-1. Remove it from active code/configuration.
-2. Rotate or revoke it immediately.
-3. Remove it from repository history when required.
-4. Audit usage and access logs when relevant.
+Files holding real values (`.env`, `.env.local`, `.env.production`) MUST be listed in `.gitignore`.
+
+Repos SHOULD run a secret scanner as part of the `security` check. See [CHECKS.md](CHECKS.md).
+
+### If a secret is exposed
+
+Order matters. Do all four steps.
+
+1. Rotate or revoke the credential immediately. Do this first — removing the code does not un-leak the value.
+2. Remove the secret from active code and configuration.
+3. Purge it from repository history when the repository is shared or public.
+4. Audit access and usage logs for the exposure window.
+
+MUST NOT close the incident after step 2 alone.
 
 ## Input and output
 
-- Treat all external input as untrusted.
-- Validate input at system boundaries.
-- Encode output according to its destination context.
-- Avoid dynamic SQL string construction.
-- Avoid shell command construction from raw user input.
-- Do not deserialize untrusted data using unsafe mechanisms.
+- MUST treat all external input as untrusted.
+- MUST validate input at system boundaries.
+- MUST encode output for its destination context.
+- MUST NOT build SQL by string concatenation. Use parameterized queries.
+- MUST NOT build shell commands from raw user input.
+- MUST NOT deserialize untrusted data with unsafe mechanisms.
 
 ## Authentication and authorization
 
-- Authentication proves identity.
-- Authorization verifies permission.
-- Always enforce authorization server-side.
-- Never trust client-side role checks as the only control.
-- Use least privilege.
-- Deny by default when permission is ambiguous.
+Authentication proves identity. Authorization verifies permission. They are separate controls.
 
-## Dependencies
-
-- Prefer maintained packages.
-- Avoid dependencies with unclear ownership or abandoned maintenance.
-- Review security impact before introducing authentication, crypto, parsing, or serialization libraries.
-- Patch known critical vulnerabilities promptly.
+- MUST enforce authorization server-side.
+- MUST NOT rely on a client-side role check as the only control.
+- MUST apply least privilege.
+- MUST deny by default when permission is ambiguous.
 
 ## Logging
 
-Never log:
+MUST NOT log:
 
 - passwords;
-- full access tokens;
+- full access or refresh tokens;
 - private keys;
 - full payment credentials;
-- sensitive personal data unless explicitly required and protected.
+- sensitive personal data, unless explicitly required and protected.
+
+Redact at the logger, not at each call site. SHOULD.
+
+Log format and correlation identifiers are a stack concern. See [../stacks/](../stacks/).
 
 ## Cryptography
 
-- Do not implement custom cryptography.
-- Use established libraries and platform primitives.
-- Do not invent encryption formats, password hashing algorithms, or signing schemes.
+- MUST NOT implement custom cryptography.
+- MUST use established libraries and platform primitives.
+- MUST NOT invent an encryption format, password hashing scheme, or signing scheme.
+- Password storage MUST use a memory-hard algorithm such as argon2 or bcrypt. Never a plain hash.
+
+## Dependencies
+
+Security-relevant intake rules live with the dependency owner: [DEPENDENCIES.md](DEPENDENCIES.md).
+
+Two rules stay here because they are mandatory and never overridable:
+
+- Known critical vulnerability in a production dependency MUST be patched or mitigated before the next release.
+- A dependency that handles authentication, cryptography, parsing, or deserialization MUST get a security review before it is added.

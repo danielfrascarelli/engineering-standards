@@ -1,49 +1,64 @@
 # Pull Request Standards
 
-## Pull request size
+Owner: PR size, description fields, approvals, review focus.
 
-Prefer small, reviewable pull requests.
+Every change to a protected branch arrives through a PR. MUST. See [GIT.md](GIT.md).
 
-A PR should ideally represent one logical change.
+## Size
 
-Avoid mixing:
+One PR, one logical change. MUST.
 
-- feature work and unrelated refactors;
-- dependency upgrades and behavior changes;
-- mass formatting and functional changes.
+MUST NOT mix:
+
+- feature work and unrelated refactor;
+- dependency upgrade and behavior change;
+- mass reformatting and functional change.
+
+Large unavoidable change SHOULD be split into a stacked series, each reviewable alone.
 
 ## Description
 
-A useful PR description contains:
+These fields are canonical. Agent reports reuse them. See [../AGENTS.md](../AGENTS.md).
 
-- problem or goal;
-- solution summary;
-- important tradeoffs;
-- testing performed;
-- migration or deployment notes when relevant.
+| Field | Required |
+| --- | --- |
+| Problem or goal | MUST |
+| Solution summary | MUST |
+| Testing performed | MUST |
+| Tradeoffs, and alternatives rejected | SHOULD |
+| Migration or deployment notes | MUST when deploy or data change is involved |
+| Deviations: any SHOULD rule not followed, with reason | MUST when a deviation exists |
 
-## UI changes
+Template: [.github/pull_request_template.md](../.github/pull_request_template.md).
 
-Include screenshots or recordings when visual behavior changes materially.
+UI behavior changed? Attach screenshot or recording. MUST.
 
-## Reviewer expectations
+## Before requesting review
 
-Reviewers should focus on:
+- Self-review the diff first. MUST.
+- Remove debug code and unrelated changes. MUST.
+- Run all six checks. MUST. See [CHECKS.md](CHECKS.md).
+- Update docs if behavior changed. MUST. See [DOCUMENTATION.md](DOCUMENTATION.md).
 
-- correctness;
-- security;
-- maintainability;
-- architecture consistency;
-- test quality;
-- backwards compatibility;
-- operational impact.
+## Approvals
 
-## Author expectations
+- Minimum one approval from someone who did not write the code. MUST.
+- Change to authentication, authorization, cryptography, or secret handling MUST get a second approval from a code owner. See [SECURITY.md](SECURITY.md).
+- Author MUST NOT approve or merge their own PR.
+- Failing required check blocks merge. MUST.
+- Code owners: [.github/CODEOWNERS](../.github/CODEOWNERS).
 
-Before requesting review:
+## Reviewer focus
 
-- self-review the diff;
-- remove debug code;
-- remove unrelated changes;
-- run required checks;
-- update documentation if behavior changed.
+In priority order:
+
+1. Correctness.
+2. Security.
+3. Test quality.
+4. Backwards compatibility and operational impact.
+5. Architecture consistency.
+6. Maintainability.
+
+Reviewers SHOULD skip pure formatting comments. Formatter owns formatting. See [CHECKS.md](CHECKS.md).
+
+Reviewer blocking a PR MUST name the rule or the concrete failure. "I would write it differently" is not a blocker.
