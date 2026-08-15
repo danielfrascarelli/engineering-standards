@@ -51,7 +51,7 @@ Pipeline, container, and deploy rules: [../standards/DELIVERY.md](../standards/D
 
 - Ruff MUST be the linter and the formatter.
 - Config MUST live in `pyproject.toml`. It is the source of truth.
-- MUST NOT set `fix = true` in committed config. Auto-fix belongs on an explicit invocation, so a command named "lint" never mutates source. See [../standards/DELIVERY.md](../standards/DELIVERY.md).
+- MUST NOT set `fix = true` in committed config. Ruff's config is the one place a Python repo can turn its lint gate into a mutating command without anyone noticing. Gate integrity is owned by [../standards/DELIVERY.md](../standards/DELIVERY.md).
 - Line length MUST be set explicitly and enforced. MUST NOT declare a line length and then ignore the rule that enforces it.
 - Baseline rule selection MUST extend `E`, `F`, `W`, `I`, `B`, `UP`, `SIM` with at least `N` (naming), `T20` (no print), `S` (security), `ASYNC`, and `RUF`.
 - Enabling `UP` obliges removing legacy `typing.List`, `Dict`, `Optional`, and `Tuple`. Dozens of survivors are proof the linter is not actually running on that code.
@@ -137,7 +137,6 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Py
 - Shared fixtures MUST live in `conftest.py` at the narrowest scope that needs them. Fixture hierarchies SHOULD stay shallow.
 - Repeated cases SHOULD use `pytest.mark.parametrize`, not copy-pasted test bodies.
 - Test MUST NOT depend on network or on a developer's local files.
-- Coverage threshold MUST be enforced by a command CI runs. See [../standards/DELIVERY.md](../standards/DELIVERY.md).
 - A test script targeting a removed endpoint MUST be deleted or fixed.
 
-Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md).
+Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md). Coverage threshold as a gate: [../standards/DELIVERY.md](../standards/DELIVERY.md).

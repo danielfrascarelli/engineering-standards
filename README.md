@@ -22,10 +22,10 @@ engineering-standards/
 │   ├── SECURITY.md               # mandatory security rules
 │   └── TESTING.md                # test strategy
 ├── stacks/
-│   ├── ML.md
 │   ├── NESTJS.md
 │   ├── NODE.md
 │   ├── PYTHON.md
+│   ├── PYTHON_ML.md              # extends PYTHON.md, for services that ship a model
 │   └── REACT.md
 ├── tooling/
 │   └── PLUGINS.md                # approved tools and agent plugins
