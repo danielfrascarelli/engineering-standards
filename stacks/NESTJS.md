@@ -154,7 +154,7 @@ Leaving `forbidNonWhitelisted` unset silently strips unknown properties instead 
 - Every request MUST carry a correlation identifier, generated in `genReqId` and present on every log line. Threading a request id through function signatures without ever binding it to the logger leaves logs uncorrelated.
 - Pretty-printed output MUST be development only. Production logs are raw JSON on stdout.
 - One canonical list of sensitive field names MUST exist, applied to every egress channel: logger redaction and error-tracker `beforeSend` and `beforeBreadcrumb`. A new sensitive field lands in all of them in the same commit.
-- One logger injection style per repo. Pick injected `PinoLogger` with `setContext`, or `new Logger(ClassName.name)`, and state which.
+- One logger injection style per repo. MUST pick either injected `PinoLogger` with `setContext` or `new Logger(ClassName.name)`, and MUST state which in the README.
 - Telemetry and metering code MUST swallow its own failures. A metrics write MUST NOT break a request.
 - The tracing bootstrap MUST be the first import of `main.ts`, before anything else loads, or auto-instrumentation cannot patch modules.
 
@@ -223,7 +223,7 @@ Three endpoints MUST exist, version-neutral, with the exposure each one is allow
 - A degraded third party MUST NOT make the app report not-ready. Otherwise someone else's outage pulls the whole fleet out of the load balancer.
 - `app.enableShutdownHooks()` MUST be called.
 - Teardown MUST run through `onModuleDestroy` lifecycle hooks, not custom `process.on('SIGTERM')` handlers in application code. A handler that calls `process.exit()` can kill the process before Nest has drained.
-- Shutdown order: stop accepting new work, disconnect WebSocket clients, let in-flight work finish, close the datastore last.
+- Shutdown MUST run in this order: stop accepting new work, disconnect WebSocket clients, let in-flight work finish, close the datastore last.
 - Every outbound third-party call MUST have a timeout and SHOULD have a circuit breaker, through exactly one code path.
 
 ## Testing
