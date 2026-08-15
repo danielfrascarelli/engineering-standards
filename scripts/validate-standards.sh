@@ -159,7 +159,9 @@ else
     pass "every commit carries the declared identity <$DECLARED_EMAIL>"
   fi
 
-  if git log --format='%B' | grep -qiE 'claude\.ai/code|Claude-Session:|Co-Authored-By:.*(claude|copilot|cursor|codex)|Generated with .*(Claude|Copilot|Cursor|Codex)'; then
+  # Anchored to line start on purpose. A trailer is a line; an unanchored match
+  # would also reject a commit that documents this very rule in prose.
+  if git log --format='%B' | grep -qiE '^[[:space:]]*(Co-Authored-By:.*(claude|copilot|cursor|codex|gpt|gemini|anthropic|openai)|Claude-Session:|Generated with .*(Claude|Copilot|Cursor|Codex)|https?://claude\.ai/code)'; then
     fail "history contains an AI-agent trailer or session link. See standards/GIT.md 'Authorship'."
   else
     pass "history carries no agent trailers"

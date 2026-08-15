@@ -20,7 +20,9 @@ if printf '%s\n' "$body" | grep -qiE '^[[:space:]]*Co-Authored-By:.*(claude|copi
   exit 1
 fi
 
-if printf '%s\n' "$body" | grep -qiE 'claude\.ai/code|^[[:space:]]*Claude-Session:|Generated with .*(Claude|Copilot|Cursor|Codex)'; then
+# Anchored to line start on purpose. A trailer is a line; an unanchored match
+# would also reject a commit that documents this very rule in prose.
+if printf '%s\n' "$body" | grep -qiE '^[[:space:]]*(Claude-Session:|Generated with .*(Claude|Copilot|Cursor|Codex)|https?://claude\.ai/code)'; then
   echo "commit-msg: agent session link or 'Generated with ...' footer is not allowed." >&2
   echo "            See standards/GIT.md 'Authorship'." >&2
   exit 1

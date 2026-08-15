@@ -50,7 +50,9 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
     fi
   done < <(git log --format='%H %ae' "${range[@]}")
 
-  if git log --format='%B' "${range[@]}" | grep -qiE 'claude\.ai/code|Claude-Session:|Co-Authored-By:.*(claude|copilot|cursor|codex)'; then
+  # Anchored to line start on purpose. A trailer is a line; an unanchored match
+  # would also reject a commit that documents this very rule in prose.
+  if git log --format='%B' "${range[@]}" | grep -qiE '^[[:space:]]*(Co-Authored-By:.*(claude|copilot|cursor|codex|gpt|gemini|anthropic|openai)|Claude-Session:|Generated with .*(Claude|Copilot|Cursor|Codex)|https?://claude\.ai/code)'; then
     echo "pre-push: an outgoing commit message contains an agent trailer or session link." >&2
     status=1
   fi
