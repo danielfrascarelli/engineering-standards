@@ -54,7 +54,7 @@ Pipeline, container, and deploy rules: [../standards/DELIVERY.md](../standards/D
 - MUST NOT set `fix = true` in committed config. Ruff's config is the one place a Python repo can turn its lint gate into a mutating command without anyone noticing. Gate integrity is owned by [../standards/DELIVERY.md](../standards/DELIVERY.md).
 - Line length MUST be set explicitly and enforced. MUST NOT declare a line length and then ignore the rule that enforces it.
 - Baseline rule selection MUST extend `E`, `F`, `W`, `I`, `B`, `UP`, `SIM` with at least `N` (naming), `T20` (no print), `S` (security), `ASYNC`, and `RUF`.
-- Enabling `UP` obliges removing legacy `typing.List`, `Dict`, `Optional`, and `Tuple`. Dozens of survivors are proof the linter is not actually running on that code.
+- Enabling `UP` MUST be followed by removing legacy `typing.List`, `Dict`, `Optional`, and `Tuple`. Note: dozens of survivors are proof the linter is not actually running on that code.
 - Per-file ignore MUST name the rule code and carry a reason. Blanket `# noqa` MUST NOT be used.
 
 Commands: [../standards/CHECKS.md](../standards/CHECKS.md).
