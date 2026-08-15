@@ -4,12 +4,15 @@
 !.env.example
 !.env.template
 
-# Editor and OS state. See standards/GIT.md
+# Editor, agent, and OS state. See standards/GIT.md
 .DS_Store
 Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Agent tool state. Worktrees created under here are checkouts, not content.
+.claude/
 
 # Local scratch
 tmp/
