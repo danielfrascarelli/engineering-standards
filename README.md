@@ -21,6 +21,7 @@ engineering-standards/
 │   ├── SECURITY.md               # mandatory security rules
 │   └── TESTING.md                # test strategy
 ├── stacks/
+│   ├── NESTJS.md
 │   ├── NODE.md
 │   ├── PYTHON.md
 │   └── REACT.md
