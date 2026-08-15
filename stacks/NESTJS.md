@@ -4,10 +4,40 @@ Extends [NODE.md](NODE.md). Everything there applies. This file covers only what
 
 Global rules are not repeated here. Ownership map: [../README.md](../README.md).
 
+## Reference stack
+
+The libraries a NestJS service in this workspace is expected to use. A repo departing from a row MUST record the reason in its own `AGENTS.md`.
+
+| Concern | Choice |
+| --- | --- |
+| Runtime | Node active LTS, pinned per [NODE.md](NODE.md) |
+| Framework | NestJS 11 + Express, TypeScript strict |
+| API docs | `@nestjs/swagger`, UI at `/docs`, bearer auth |
+| Validation | `class-validator` / `class-transformer`, global `ValidationPipe` |
+| Config | `@nestjs/config` + Joi env schema, fail-fast |
+| Auth | `@nestjs/jwt`, access + refresh, bcrypt |
+| Rate limiting | `@nestjs/throttler`, global guard |
+| Security | helmet, CORS allowlist, cookie-parser, compression |
+| Health | `@nestjs/terminus` |
+| Logging | `nestjs-pino`, structured JSON, request id, redaction |
+| Tracing | OpenTelemetry, opt-in via `OTEL_ENABLED` |
+| Error tracking | `@sentry/node`, opt-in via `SENTRY_DSN`, unexpected 500s only, secrets scrubbed |
+| Resilience | `opossum` circuit breaker around outbound upstreams |
+| API contract | committed `openapi.json`, exported by script, diff-checked in CI |
+| Supply chain | audit gate on production dependencies + automated updates. See [../standards/DEPENDENCIES.md](../standards/DEPENDENCIES.md) |
+| ORM | Prisma + `@prisma/client`, migrations + seed |
+| Outbound HTTP | `@nestjs/axios` |
+| Scheduling | `@nestjs/schedule` |
+| WebSockets | `@nestjs/websockets` + socket.io |
+| Tests | Jest — unit / integration / e2e. See [Testing](#testing) |
+| Git hooks | husky + lint-staged + commitlint |
+| Production process | PM2, fork mode, graceful shutdown |
+
+Note: which database engine, which upstream services, which socket namespaces, and which schedules a service runs are project facts, not stack rules. They belong in the consuming repo's `AGENTS.md`. See [../README.md](../README.md), "Consuming repo".
+
 ## Runtime and version
 
-- Node version MUST be pinned in three places that agree: `.nvmrc`, `engines.node` in `package.json`, and CI's `node-version-file`. Two out of three is drift waiting to happen.
-- `packageManager` MUST be declared in `package.json`. One package manager everywhere: local, CI, and container. A repo whose CI uses npm and whose Dockerfile uses pnpm builds against unlocked dependencies.
+- Node and package-manager pinning: [NODE.md](NODE.md), which owns that rule. NestJS adds nothing to it.
 - NestJS major version MUST be stated in the README, and corrected in the same PR that bumps it.
 
 ## Language and types
@@ -20,7 +50,7 @@ Global rules are not repeated here. Ownership map: [../README.md](../README.md).
 
 ## Project structure
 
-Three layers under `src/`:
+Four top-level directories under `src/`:
 
 ```text
 src/modules/<feature>/    HTTP surface and domain logic
@@ -39,7 +69,7 @@ src/observability/        tracing and error reporting, loaded before DI exists
 - MUST NOT create barrel `index.ts` files.
 - `paths` aliases MUST be declared in `tsconfig.json` and mirrored in the Jest `moduleNameMapper`. Relative imports climbing more than one directory MUST NOT be used.
 - Versioned HTTP surface MUST live at `src/modules/api/v<N>/<feature>/`, so URL version and directory version always agree.
-- Bidirectional module dependency MUST be broken with a `@Global()` provider module, not `forwardRef`.
+- A bidirectional module or provider dependency MUST be removed by extracting the shared provider or module. `@Global()` and `forwardRef()` MUST NOT be used to mask a cycle. `@Global()` only changes where exports are visible, and `forwardRef()` only defers resolution; neither removes the coupling that made the cycle, and both hide it from the next reader.
 - `forRootAsync` options factories MUST live in their own `*.options.ts` file. `AppModule` MUST NOT hold inline configuration objects.
 - One exported `configureApp(app)` MUST be shared by `main.ts`, the OpenAPI export script, and the e2e bootstrap. Global prefix and versioning duplicated across three files will drift, and the drift surfaces as tests asserting a response shape production never emits.
 
@@ -66,14 +96,29 @@ Commands: [../standards/CHECKS.md](../standards/CHECKS.md).
 
 ## Validation
 
-Global pipe MUST be exactly:
+A global `ValidationPipe` MUST be registered, and it MUST set:
+
+| Option | Value | Why it is not optional |
+| --- | --- | --- |
+| `whitelist` | `true` | strips properties no DTO declares |
+| `forbidNonWhitelisted` | `true` | rejects them instead of stripping silently |
+| `transform` | `true` | applies `@Type` coercion before validators run |
+| `exceptionFactory` | the service's own | maps validation failures onto the documented error body |
+
+The `exceptionFactory` MUST take the framework's `ValidationError[]` and return an exception whose response body is the uniform `{ statusCode, code, message }` defined under [Errors](#errors), with `code` set to the service's validation error code. Without it, validation failures are the one error shape that escapes the contract every other failure path follows.
 
 ```ts
+// Shape, not a drop-in: the error code enum and the body live in the service.
 new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,
   transform: true,
-  exceptionFactory: validationExceptionFactory,
+  exceptionFactory: (errors: ValidationError[]) =>
+    new BadRequestException({
+      statusCode: 400,
+      code: ErrorCode.ValidationFailed,
+      message: formatValidationErrors(errors),
+    }),
 })
 ```
 
@@ -165,14 +210,16 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Ne
 
 ## Health and shutdown
 
-Three endpoints MUST exist, public and version-neutral:
+Three endpoints MUST exist, version-neutral, with the exposure each one is allowed:
 
-| Route | Checks | Answers |
-| --- | --- | --- |
-| `/health/live` | nothing | is the process up |
-| `/health/ready` | datastore only | can it serve traffic |
-| `/health/dependencies` | external upstreams | is anything degraded |
+| Route | Checks | Answers | Exposure |
+| --- | --- | --- | --- |
+| `/health/live` | nothing | is the process up | MAY be public |
+| `/health/ready` | datastore only | can it serve traffic | private |
+| `/health/dependencies` | external upstreams | is anything degraded | private |
 
+- `/health/live` MAY be public when the platform requires an unauthenticated probe, and MUST then return a status only — no dependency names, no versions, no error text.
+- `/health/ready` and `/health/dependencies` MUST be reachable only by orchestration, through network policy or authentication. Naming your upstreams and their current state to an unauthenticated caller hands over a map of what to attack and when it is already weak. See [../standards/SECURITY.md](../standards/SECURITY.md).
 - A degraded third party MUST NOT make the app report not-ready. Otherwise someone else's outage pulls the whole fleet out of the load balancer.
 - `app.enableShutdownHooks()` MUST be called.
 - Teardown MUST run through `onModuleDestroy` lifecycle hooks, not custom `process.on('SIGTERM')` handlers in application code. A handler that calls `process.exit()` can kill the process before Nest has drained.
