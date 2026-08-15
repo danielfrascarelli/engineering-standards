@@ -6,6 +6,16 @@ Agents follow the same standards as human contributors. This file adds agent-spe
 
 Baseline workflow: [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md). Read it first. Rules below are additions only.
 
+## This repository
+
+Git identity (see [standards/GIT.md](standards/GIT.md), "Authorship"):
+
+- user.name:  danielfrascarelli
+- user.email: dsanfra@gmail.com
+- gh account: danielfrascarelli
+
+Every consuming repo carries its own block. Identity differs between repos. MUST NOT copy this one forward without checking.
+
 ## Where standards live
 
 In a consuming repo, central standards sit at `.standards/`, added by submodule or sync script. See [README.md](README.md).
@@ -70,6 +80,15 @@ Agent report MUST contain every field of the PR description in [standards/PR.md]
 - assumptions made where request was ambiguous.
 
 Agent opening a PR: PR description is the report. Do not write two different summaries.
+
+## Committing
+
+- MUST verify `git config user.name` and `git config user.email` at repo level match the identity declared in the repo's `AGENTS.md`, before the first commit in a clone or worktree.
+- MUST NOT add a `Co-Authored-By:` trailer naming yourself or any AI tool.
+- MUST NOT add a session link or a "Generated with ..." footer.
+- Full rule: [standards/GIT.md](standards/GIT.md), "Authorship".
+
+The tool that produced a change is not its author. Write the commit as the declared human identity, and describe the change, not the process.
 
 ## Forbidden
 

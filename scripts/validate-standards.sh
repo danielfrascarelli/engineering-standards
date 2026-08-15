@@ -45,6 +45,9 @@ REQUIRED=(
   stacks/REACT.md
   tooling/PLUGINS.md
   scripts/sync-standards.sh
+  scripts/hooks/commit-msg
+  scripts/hooks/pre-push
+  scripts/hooks/install.sh
   .github/CODEOWNERS
   .github/pull_request_template.md
 )
@@ -123,6 +126,43 @@ else
     pass "sync script runs"
   else
     fail "sync script failed on a dry run"
+  fi
+fi
+
+# ---------------------------------------------------------------- 5. hooks executable
+
+hook_failures=0
+for hook in scripts/hooks/commit-msg scripts/hooks/pre-push scripts/hooks/install.sh; do
+  [[ -x "$hook" ]] || { fail "$hook is not executable"; hook_failures=$((hook_failures + 1)); }
+done
+[[ "$hook_failures" -eq 0 ]] && pass "reference hooks are executable"
+
+# ---------------------------------------------------------------- 6. authorship
+#
+# Hooks are per clone and opt-in, so the same two checks run here. See
+# standards/GIT.md, "Authorship".
+
+DECLARED_EMAIL="$(sed -nE 's/^[[:space:]]*-?[[:space:]]*user\.email:[[:space:]]*(.+)[[:space:]]*$/\1/p' AGENTS.md | head -1)"
+
+if [[ -z "$DECLARED_EMAIL" ]]; then
+  fail "AGENTS.md declares no 'user.email:'. Add a Git identity block."
+elif ! git rev-parse --git-dir > /dev/null 2>&1; then
+  echo "skip: not a git repository, authorship checks not run"
+else
+  bad_authors="$(git log --format='%H %ae' | awk -v want="$DECLARED_EMAIL" '$2 != want {print $1" "$2}')"
+  if [[ -n "$bad_authors" ]]; then
+    while read -r sha email; do
+      [[ -z "$sha" ]] && continue
+      fail "${sha:0:8} authored by <$email>, expected <$DECLARED_EMAIL>"
+    done <<< "$bad_authors"
+  else
+    pass "every commit carries the declared identity <$DECLARED_EMAIL>"
+  fi
+
+  if git log --format='%B' | grep -qiE 'claude\.ai/code|Claude-Session:|Co-Authored-By:.*(claude|copilot|cursor|codex)|Generated with .*(Claude|Copilot|Cursor|Codex)'; then
+    fail "history contains an AI-agent trailer or session link. See standards/GIT.md 'Authorship'."
+  else
+    pass "history carries no agent trailers"
   fi
 fi
 

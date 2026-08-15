@@ -27,7 +27,12 @@ engineering-standards/
 ├── tooling/
 │   └── PLUGINS.md                # approved tools and agent plugins
 ├── scripts/
-│   └── sync-standards.sh         # copy standards into consuming repo
+│   ├── sync-standards.sh         # copy standards into consuming repo
+│   ├── validate-standards.sh     # enforce this repo's own rules
+│   └── hooks/                    # reference git hooks for consuming repos
+│       ├── commit-msg            # rejects AI-agent trailers
+│       ├── install.sh
+│       └── pre-push              # rejects commits with the wrong author
 └── .github/
     ├── CODEOWNERS
     ├── pull_request_template.md
@@ -112,6 +117,11 @@ Project facts:
 - Test runner: Vitest
 - Deployment target: AWS Lambda
 - Database: PostgreSQL
+
+Git identity (see .standards/standards/GIT.md, "Authorship"):
+- user.name:  danielfrascarelli
+- user.email: dsanfra@gmail.com
+- gh account: danielfrascarelli
 
 Checks (see .standards/standards/CHECKS.md):
 - format: pnpm format:check

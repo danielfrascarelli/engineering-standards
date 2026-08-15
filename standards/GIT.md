@@ -64,6 +64,56 @@ Rules:
 - MUST NOT mix formatting-only change with behavior change.
 - Subject in imperative mood, no trailing period. SHOULD.
 
+## Authorship
+
+Every repo declares one git identity for its commits and pull requests. Identity is not always the same across repos, so it MUST be declared per repo, never assumed.
+
+Three layers. Each has a distinct job. None is sufficient alone.
+
+| Layer | Job | Where |
+| --- | --- | --- |
+| Declaration | states the identity, travels with the repo | repo `AGENTS.md`, project-facts block |
+| Application | makes commits actually carry it | `git config` at repo level |
+| Enforcement | stops a wrong commit | committed `.githooks/`, plus a CI check |
+
+### Declaration
+
+Repo `AGENTS.md` MUST carry a `Git identity` block:
+
+```md
+Git identity:
+- user.name:  danielfrascarelli
+- user.email: dsanfra@gmail.com
+- gh account: danielfrascarelli
+```
+
+MUST NOT invent a separate file for this. A fourth location nothing reads drifts.
+
+### Application
+
+- Identity MUST be set at repo level: `git config user.name` and `git config user.email`.
+- A global git config MUST NOT be relied on. It is wrong the moment a second repo uses a different identity.
+- Identity MUST be verified before the first commit in a new clone or worktree. `git worktree add` does not carry local config or untracked files.
+
+### Enforcement
+
+- Hooks MUST be committed under `.githooks/` and installed with `git config core.hooksPath .githooks`, exposed as a `hooks:install` script.
+- `commit-msg` MUST reject AI-agent trailers. `pre-push` MUST reject a commit whose author is not the declared identity.
+- `core.hooksPath` is per clone and opt-in, so CI MUST run the same two checks. A hook alone is not a gate.
+- Reference implementations: [../scripts/hooks/](../scripts/hooks/).
+
+### No agent traces
+
+Commit messages and PR bodies MUST NOT contain:
+
+- `Co-Authored-By:` naming an AI agent or assistant;
+- an agent session link, including `claude.ai/code` URLs;
+- a "Generated with ..." footer naming a tool.
+
+Commits carry the declared human identity. Tooling used to produce a change is not authorship, and a trailer naming it makes history harder to read and to attribute.
+
+This applies to agents. See [../AGENTS.md](../AGENTS.md).
+
 ## Before push
 
 Run checks required at push time. Names and commands: [CHECKS.md](CHECKS.md).
