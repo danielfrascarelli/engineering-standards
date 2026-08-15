@@ -15,9 +15,9 @@ Every repo MUST have two long-lived branches:
 - Every change to either MUST arrive through a pull request. MUST NOT commit directly to `main` or to `develop`.
 - `master` is legacy only. MUST NOT create a new `master`.
 - Feature work MUST branch off `develop` and merge back into `develop`.
-- `develop` reaches `main` through a release pull request. See [RELEASES.md](RELEASES.md).
+- `develop` MUST reach `main` through a release pull request. See [RELEASES.md](RELEASES.md).
 - `hotfix/` MUST branch off `main` and MUST merge into both `main` and `develop`. A hotfix landing only in `main` is reintroduced by the next release.
-- Where another standard says "integration branch", it means `develop`.
+- Note: where another standard says "integration branch", it means `develop`.
 
 ## Branches
 

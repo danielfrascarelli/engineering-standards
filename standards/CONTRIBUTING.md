@@ -41,4 +41,4 @@ Contribution MUST NOT:
 
 - Address a review comment by changing code, or by stating the technical reason for keeping it.
 - MUST NOT resolve a review thread without addressing its substance.
-- Disagreement that survives one round goes to the code owner. See [PR.md](PR.md).
+- Disagreement that survives one round MUST go to the code owner. See [PR.md](PR.md).
