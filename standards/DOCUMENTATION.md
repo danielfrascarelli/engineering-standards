@@ -37,8 +37,16 @@ Repo `AGENTS.md` MUST contain project facts and declared overrides. Shape: [../R
 ## Keeping docs true
 
 - Behavior change MUST update affected docs in the same PR. See [PR.md](PR.md).
-- Doc contradicting code is a defect. Fix or delete it.
+- A doc contradicting the code is a defect. It MUST be fixed or deleted, not left standing.
 - MUST NOT leave a doc describing a removed feature.
+
+## Language
+
+Owner of the language rule for documentation and prose: this file.
+
+- Documentation, README files, and decision records MUST be written in English.
+- Commit messages: [GIT.md](GIT.md).
+- Code comments and user-facing product copy are a repo decision and MUST be stated in the repo's own `AGENTS.md`. A product shipping in Spanish with English comments is a normal, deliberate combination; what MUST NOT happen is leaving it unstated.
 
 ## Comments
 

@@ -70,7 +70,7 @@ One topic, one owner file. Other files link. They MUST NOT restate.
 | Test strategy, coverage stance | [standards/TESTING.md](standards/TESTING.md) |
 | Human contributor workflow | [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md) |
 | Agent-only rules | [AGENTS.md](AGENTS.md) |
-| Documentation expectations | [standards/DOCUMENTATION.md](standards/DOCUMENTATION.md) |
+| Documentation expectations, prose language | [standards/DOCUMENTATION.md](standards/DOCUMENTATION.md) |
 | Versioning, tags, release notes | [standards/RELEASES.md](standards/RELEASES.md) |
 | Approved tools and plugins | [tooling/PLUGINS.md](tooling/PLUGINS.md) |
 | Stack rules | [stacks/](stacks/) |
@@ -86,6 +86,8 @@ Apply in this order. Lower number wins.
 3. Stack standards, `stacks/`.
 4. Global standards, `standards/` and `AGENTS.md`.
 5. Tool defaults.
+
+Within level 3, the more specific stack document wins. A document declaring "Extends X" narrows X; where the two disagree, the extending document is the rule. `REACT.md` allowing only Vitest beats `NODE.md` allowing Vitest or Jest, for a React repo. The extending document MUST NOT loosen a MUST it inherits — only narrow it.
 
 Explicit override means local `AGENTS.md` names central rule it replaces, plus reason:
 
