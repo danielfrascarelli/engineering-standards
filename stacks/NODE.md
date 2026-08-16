@@ -4,7 +4,10 @@ Global rules are not repeated here. Ownership map: [../README.md](../README.md).
 
 ## Runtime and version
 
-- Node version MUST be pinned in `.nvmrc` and in `engines` in `package.json`. Same value in both.
+Owner of the Node version-pinning rule: this file. A stack extending it MUST link here rather than restate it.
+
+- Node version MUST be pinned in every place that selects it, and all of them MUST agree: `.nvmrc`, `engines.node` in `package.json`, and the CI step that installs Node. Pinning two of the three drifts the moment someone bumps one.
+- A tool-version manager (asdf, mise, volta) MAY be used, but MUST NOT be the only pin. A contributor not using that manager still needs a signal.
 - MUST run an active LTS major. MUST NOT ship an end-of-life major.
 - Package manager MUST be declared in the `packageManager` field. One package manager per repo.
 - Lockfile rules: [../standards/DEPENDENCIES.md](../standards/DEPENDENCIES.md).
@@ -35,10 +38,16 @@ external integrations
 
 ## Lint and format
 
-- ESLint MUST be configured. Prettier SHOULD be the formatter.
-- One formatter and one lint strategy per repo. MUST.
-- Config MUST be committed at repo root, not held in editor settings.
-- Inline rule disable MUST carry a comment naming the reason. Blanket file-level disable MUST NOT be used.
+- A linter MUST be configured.
+- A formatter MUST be configured.
+- ESLint plus Prettier SHOULD be the default when broad ecosystem or plugin compatibility is required.
+- Biome, or Oxlint plus Oxfmt, MAY be used when their rule and plugin coverage satisfies the repo's requirements.
+- One authoritative lint strategy and one formatter per repo. MUST.
+- Configuration MUST be committed to the repo, not held in editor settings. Root configuration SHOULD be preferred; package-level overrides MAY be used in a monorepo.
+- Formatter concerns MUST NOT be enforced through lint rules when the formatter already owns them.
+- Inline lint disables MUST target specific rules and MUST carry a reason.
+- Blanket file-level disables MUST NOT be used. Generated and vendor files SHOULD be excluded through configuration instead.
+- Unused lint-disable directives MUST be reported.
 
 Commands and when they run: [../standards/CHECKS.md](../standards/CHECKS.md).
 

@@ -77,7 +77,7 @@ Every piece of state has exactly one home. Picking the wrong one is the main arc
 - MUST NOT store derived state. Compute during render.
 - MUST NOT keep two copies of the same state in sync by hand.
 - Modal-open, active-tab, password-visibility, and preview state MUST NOT be lifted out of the component that owns it.
-- Selector-less store reads are acceptable for rarely-changing state. Fine-grained selectors are added when a measurement shows a render problem, not before.
+- Selector-less store reads MAY be used for rarely-changing state. Fine-grained selectors SHOULD be added when a measurement shows a render problem, not before.
 
 ## Data fetching
 
@@ -152,7 +152,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 - Session state MUST be cleared in the mutation's settled callback, not its success callback, so a failed logout request still logs the user out locally. The query cache is cleared alongside it.
 - A token acquired without a successfully loaded profile MUST be treated as a half-open session and dropped.
 - A fixture or mock login path that produces an authenticated session without a real credential MUST NOT ship. Gate it behind a build flag or delete it.
-- Every client-side environment variable is public and is inlined into the bundle. MUST NOT put a secret in one, whatever the prefix. `.env.example` MUST say so.
+- Every client-side environment variable is public and is inlined into the bundle. MUST NOT put a secret in one, whatever the prefix. The environment template MUST say so.
 - MUST NOT use `dangerouslySetInnerHTML` with unsanitized content.
 - A client-side route guard is a UX affordance, not authorization. The server MUST enforce it.
 
@@ -168,7 +168,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 
 ## Environment and config
 
-- `.env.example` MUST be committed listing every variable the app reads, with its default and the module that consumes it. `.gitignore` covers `.env*` with an exception for the example. See [../standards/SECURITY.md](../standards/SECURITY.md).
+- The environment template required by [../standards/SECURITY.md](../standards/SECURITY.md) MUST list every variable the app reads, with its default and the module that consumes it. `.gitignore` MUST cover `.env*` with an exception for the template.
 - Environment variables MUST be read in exactly one module, exporting the resolved value as a named constant. MUST NOT sprinkle `import.meta.env` through components.
 
 ## Testing
@@ -181,7 +181,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Re
 - Module-singleton stores MUST be reset in `beforeEach`. Store state survives between tests otherwise, and the failure looks like a test-ordering bug.
 - Environment polyfills the component library needs — pointer capture, `scrollIntoView`, `matchMedia`, `ResizeObserver` — MUST live in the shared setup file, each with a comment saying why, and global stubs MUST be unstubbed in `afterEach`.
 - The network MUST be stubbed at the HTTP boundary, not by mocking the component's own module.
-- Minimum coverage of behavior: every store transition, every schema rule, each wrapper's mapping onto its primitive, and one end-to-end form path through resolver and network.
+- Tests MUST cover, at minimum: every store transition, every schema rule, each wrapper's mapping onto its primitive, and one end-to-end form path through resolver and network.
 - The provider chain and every guard redirect MUST be smoke-tested at the app root. A missing provider otherwise only surfaces at runtime.
 - End-to-end tests SHOULD cover critical user flows only.
 

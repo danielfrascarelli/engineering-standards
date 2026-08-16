@@ -4,7 +4,9 @@ Applies to AI coding agents, autonomous tools, code-generation assistants, autom
 
 Agents follow the same standards as human contributors. This file adds agent-specific duties. It does not replace them.
 
-Baseline workflow: [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md). Read it first. Rules below are additions only.
+Baseline workflow: [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md). Rules below are additions only.
+
+Read order is owned by [README.md](README.md), ["Read order"](README.md#read-order). MUST follow it. This file states no order of its own.
 
 ## This repository
 
@@ -12,20 +14,15 @@ Git identity (see [standards/GIT.md](standards/GIT.md), "Authorship"):
 
 - user.name:  danielfrascarelli
 - user.email: dsanfra@gmail.com
-- gh account: danielfrascarelli
+- gh account: danielfrascarelli   # pull request author, not checked by git hooks
 
-Every consuming repo carries its own block. Identity differs between repos. MUST NOT copy this one forward without checking.
+Every consuming repo carries its own block. Identity differs between repos. MUST NOT copy this one forward without checking. The sync script strips this section from the generated copy for that reason.
 
 ## Where standards live
 
 In a consuming repo, central standards sit at `.standards/`, added by submodule or sync script. See [README.md](README.md).
 
-Read order:
-
-1. `.standards/README.md` — precedence and rule strength.
-2. Repo `README.md`.
-3. Repo `AGENTS.md` — project facts and declared overrides.
-4. `.standards/standards/` and `.standards/stacks/` files relevant to the change.
+Which documents to load, and in what order: [README.md](README.md), ["Read order"](README.md#read-order). MUST NOT load a stack document that no changed path maps to.
 
 Standards not present at `.standards/`? Say so. MUST NOT invent rules to fill gap.
 
@@ -65,7 +62,7 @@ Same duty as human contributor. No exemption.
 
 ## Validation
 
-Run the six checks in [standards/CHECKS.md](standards/CHECKS.md) before reporting done.
+MUST run the six checks in [standards/CHECKS.md](standards/CHECKS.md) before reporting done.
 
 - MUST NOT report a check as passed unless it ran.
 - Check could not run? MUST name it and state why.
@@ -86,9 +83,10 @@ Agent opening a PR: PR description is the report. Do not write two different sum
 - MUST verify `git config user.name` and `git config user.email` at repo level match the identity declared in the repo's `AGENTS.md`, before the first commit in a clone or worktree.
 - MUST NOT add a `Co-Authored-By:` trailer naming yourself or any AI tool.
 - MUST NOT add a session link or a "Generated with ..." footer.
+- The same three rules apply to the pull request title and body, not only to the commit message. MUST.
 - Full rule: [standards/GIT.md](standards/GIT.md), "Authorship".
 
-The tool that produced a change is not its author. Write the commit as the declared human identity, and describe the change, not the process.
+Note: the tool that produced a change is not its author. A commit is written as the declared human identity and describes the change, not the process.
 
 ## Forbidden
 
@@ -100,3 +98,7 @@ The tool that produced a change is not its author. Write the commit as the decla
 - MUST NOT weaken security control for convenience.
 - MUST NOT push to protected branch. See [standards/GIT.md](standards/GIT.md).
 - MUST NOT force-push shared branch.
+
+## Overrides
+
+(none)
