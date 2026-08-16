@@ -1,0 +1,53 @@
+# Example workflow for a repository that CONSUMES these standards.
+#
+# Copy it into the consuming repo as .github/workflows/validate-standards.yml.
+# It is not run by this repository; it is the reference implementation of
+# README.md, "Option C, CI validation".
+#
+name: validate-standards
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+        with:
+          # Needed only in submodule mode, harmless otherwise.
+          submodules: true
+
+      # The comparison checkout. Without it staleness and removal of a security
+      # MUST rule are reported as skipped, never as passed.
+      - name: Check out the central standards
+        uses: actions/checkout@v4
+        with:
+          repository: danielfrascarelli/engineering-standards
+          ref: main
+          path: .engineering-standards
+
+      - name: Validate standards
+        run: |
+          .engineering-standards/scripts/validate-consumer-standards.sh \
+            --target "$GITHUB_WORKSPACE" \
+            --dest .standards \
+            --source "$GITHUB_WORKSPACE/.engineering-standards"
+
+      # A git hook cannot see a pull request body, so the "no agent traces"
+      # rule needs this half in CI. The body is untrusted input: pass it by
+      # environment variable, never interpolate it into the command.
+      - name: Check pull request body for agent traces
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$PR_TITLE" "$PR_BODY" \
+            | .engineering-standards/scripts/check-pr-body.sh -

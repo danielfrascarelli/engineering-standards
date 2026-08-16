@@ -19,15 +19,21 @@ MUST NOT commit:
 
 Read secrets from environment variables or an approved secret manager. MUST.
 
-Example files: `.env.example` and `.env.template` MUST be committed and MUST contain placeholder values only. A real value in an example file is a leaked secret.
+### Environment templates
 
-Files holding real values (`.env`, `.env.local`, `.env.production`) MUST be listed in `.gitignore`.
+A repository that reads environment variables at runtime MUST commit one template file: `.env.example` or `.env.template`. One, not both.
 
-Repos SHOULD run a secret scanner as part of the `security` check. See [CHECKS.md](CHECKS.md).
+- The template MUST list every required variable name with a placeholder value, and nothing else. A real value in a template file is a leaked secret.
+- A repository that reads no environment variables MUST NOT add an empty template file.
+- Files holding real values (`.env`, `.env.local`, `.env.production`) MUST be listed in `.gitignore`.
+
+### Secret scanning
+
+Repos MUST run a secret scanner as part of the `security` check. Scanner choice and the wrapping command are owned by [CHECKS.md](CHECKS.md).
 
 ### If a secret is exposed
 
-Order matters. Do all four steps.
+Order matters. All four steps MUST be completed.
 
 1. Rotate or revoke the credential immediately. Do this first — removing the code does not un-leak the value.
 2. Remove the secret from active code and configuration.
