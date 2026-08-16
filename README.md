@@ -30,7 +30,9 @@ engineering-standards/
 ├── tooling/
 │   └── PLUGINS.md                # approved tools and agent plugins
 ├── docs/
-│   └── workspace-setup.md        # example local setup, not a requirement
+│   ├── workspace-setup.md        # example local setup, not a requirement
+│   └── examples/
+│       └── validate-consumer-standards.yml   # copy into a consuming repo; not run here
 ├── scripts/
 │   ├── sync-standards.sh              # copy standards into consuming repo
 │   ├── validate-standards.sh          # enforce this repo's own rules
@@ -48,8 +50,7 @@ engineering-standards/
     ├── CODEOWNERS
     ├── pull_request_template.md
     └── workflows/
-        ├── validate-standards.yml
-        └── validate-consumer-standards.example.yml
+        └── validate-standards.yml
 ```
 
 `AGENTS.md` MUST stay at the repository root. Agent tooling looks for it there.
@@ -247,7 +248,7 @@ Consuming repos SHOULD run [scripts/validate-consumer-standards.sh](scripts/vali
   --source "$GITHUB_WORKSPACE/.engineering-standards"
 ```
 
-Copy-ready workflow: [.github/workflows/validate-consumer-standards.example.yml](.github/workflows/validate-consumer-standards.example.yml).
+Copy-ready workflow: [docs/examples/validate-consumer-standards.yml](docs/examples/validate-consumer-standards.yml). It lives under `docs/` on purpose. GitHub runs every `.yml` under `.github/workflows/`, whatever the filename says, so an example kept there is not an example — it is a job this repo runs against a `.standards/` directory it does not have.
 
 Note: the script detects which consumption option is in use. Submodule consumers have no `SOURCE_REV` and no generated headers, so those checks are skipped rather than failed, and the pinned commit is compared instead. Without `--source`, staleness and rule removal are reported as skipped, never as passed.
 

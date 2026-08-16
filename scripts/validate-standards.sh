@@ -88,7 +88,7 @@ REQUIRED=(
   .github/CODEOWNERS
   .github/pull_request_template.md
   .github/workflows/validate-standards.yml
-  .github/workflows/validate-consumer-standards.example.yml
+  docs/examples/validate-consumer-standards.yml
 )
 
 missing=0
