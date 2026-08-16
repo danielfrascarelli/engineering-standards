@@ -15,43 +15,21 @@ Library and package rules are not here. They live in [../standards/DEPENDENCIES.
 
 ## Approved agent plugins
 
-These are installed in every workspace. Not examples — the actual set.
+This is an allowlist: which plugins are permitted. It is not a statement about which machine has what installed.
 
 | Plugin | Marketplace | Purpose |
 | --- | --- | --- |
 | `caveman` | `JuliusBrussee/caveman` | terse agent output, less conversational noise |
 | `frontend-design` | `claude-plugins-official` | visual design guidance for UI work |
 
-Install:
-
-```bash
-claude plugin marketplace add JuliusBrussee/caveman
-claude plugin install caveman@caveman
-
-claude plugin install frontend-design@claude-plugins-official
-```
-
-Resulting `~/.claude/settings.json` fragment:
-
-```json
-{
-  "enabledPlugins": {
-    "caveman@caveman": true,
-    "frontend-design@claude-plugins-official": true
-  },
-  "extraKnownMarketplaces": {
-    "caveman": {
-      "source": { "source": "github", "repo": "JuliusBrussee/caveman" }
-    }
-  }
-}
-```
-
 Rules:
 
+- A plugin outside this table MUST NOT be used on repository code without a PR adding it here. See [../standards/PR.md](../standards/PR.md).
 - Plugin output style MUST NOT override a security, legal, or repo-specific constraint.
 - Plugin behavior MUST NOT change what gets committed, only how the agent speaks.
-- Adding a plugin to this table needs a PR. See [../standards/PR.md](../standards/PR.md).
+- Which plugins a given workspace has installed MUST NOT be recorded here. That is machine state, and a consuming repo cannot act on it. It belongs in the repo-local `AGENTS.md` or in workspace setup documentation.
+
+Install commands and the local settings fragment: [../docs/workspace-setup.md](../docs/workspace-setup.md). That document is an example, not a requirement on any repository.
 
 ## Approved AI coding tools
 

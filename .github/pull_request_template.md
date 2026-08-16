@@ -32,7 +32,8 @@
 - [ ] Tests added or updated. See `standards/TESTING.md`.
 - [ ] Docs updated if behavior changed. See `standards/DOCUMENTATION.md`.
 - [ ] All six checks pass. See `standards/CHECKS.md`.
-- [ ] No secret added, in code, config, or example file. See `standards/SECURITY.md`.
+- [ ] No secret added, in code, config, or environment template. See `standards/SECURITY.md`.
+- [ ] No agent trailer, session link, or "Generated with ..." footer, in the commits or in this description. See `standards/GIT.md`.
 - [ ] Screenshot or recording attached, if UI behavior changed.
 
 <!--

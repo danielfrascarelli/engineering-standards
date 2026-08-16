@@ -5,12 +5,19 @@
 # The declaration is read from AGENTS.md, so the committed declaration stays
 # authoritative and the hook cannot drift from it.
 #
+# Only outgoing commits are inspected. History that predates the rule is not
+# rewritten to adopt it.
+#
 # Reference implementation. Copy into a consuming repo as .githooks/pre-push
-# and install with: git config core.hooksPath .githooks
+# and install with: scripts/hooks/install.sh, which also copies lib/.
 #
 # Rule: standards/GIT.md, "Authorship".
 #
 set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/agent-trailers.sh
+source "$HOOK_DIR/lib/agent-trailers.sh"
 
 repo_root="$(git rev-parse --show-toplevel)"
 agents_file="$repo_root/AGENTS.md"
@@ -21,13 +28,28 @@ if [[ ! -f "$agents_file" ]]; then
   exit 1
 fi
 
-declared_email="$(sed -nE 's/^[[:space:]]*-?[[:space:]]*user\.email:[[:space:]]*(.+)[[:space:]]*$/\1/p' "$agents_file" | head -1)"
+read_declared() {
+  sed -nE "s/^[[:space:]]*-?[[:space:]]*$1:[[:space:]]*(.+)[[:space:]]*$/\1/p" "$agents_file" | head -1
+}
 
-if [[ -z "$declared_email" ]]; then
-  echo "pre-push: AGENTS.md declares no 'user.email:'. Add a Git identity block." >&2
+declared_email="$(read_declared 'user\.email')"
+declared_name="$(read_declared 'user\.name')"
+
+if [[ -z "$declared_email" || -z "$declared_name" ]]; then
+  echo "pre-push: AGENTS.md must declare both 'user.name:' and 'user.email:'." >&2
   echo "          See standards/GIT.md 'Authorship'." >&2
   exit 1
 fi
+
+# A merge performed by the hosting platform rewrites the committer, never the
+# author. Allow those committers; the author check still applies.
+committer_allowed() {
+  case "$1" in
+    "$declared_email") return 0 ;;
+    noreply@github.com|*@users.noreply.github.com) return 0 ;;
+    *) return 1 ;;
+  esac
+}
 
 zero="0000000000000000000000000000000000000000"
 status=0
@@ -42,25 +64,33 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
     range=("$remote_sha..$local_sha")
   fi
 
-  while read -r sha author_email; do
+  while IFS=$'\t' read -r sha author_name author_email committer_email; do
     [[ -z "$sha" ]] && continue
     if [[ "$author_email" != "$declared_email" ]]; then
       echo "pre-push: ${sha:0:8} authored by <$author_email>, expected <$declared_email>." >&2
       status=1
     fi
-  done < <(git log --format='%H %ae' "${range[@]}")
+    if [[ "$author_name" != "$declared_name" ]]; then
+      echo "pre-push: ${sha:0:8} author name '$author_name', expected '$declared_name'." >&2
+      status=1
+    fi
+    if ! committer_allowed "$committer_email"; then
+      echo "pre-push: ${sha:0:8} committed by <$committer_email>, expected <$declared_email>." >&2
+      status=1
+    fi
+  done < <(git log --format='%H%x09%an%x09%ae%x09%ce' "${range[@]}")
 
-  # Anchored to line start on purpose. A trailer is a line; an unanchored match
-  # would also reject a commit that documents this very rule in prose.
-  if git log --format='%B' "${range[@]}" | grep -qiE '^[[:space:]]*(Co-Authored-By:.*(claude|copilot|cursor|codex|gpt|gemini|anthropic|openai)|Claude-Session:|Generated with .*(Claude|Copilot|Cursor|Codex)|https?://claude\.ai/code)'; then
+  if git log --format='%B' "${range[@]}" | agent_trailers_present; then
     echo "pre-push: an outgoing commit message contains an agent trailer or session link." >&2
+    git log --format='%B' "${range[@]}" | agent_trailers_show >&2 || true
     status=1
   fi
 done
 
 if [[ "$status" -ne 0 ]]; then
   echo "" >&2
-  echo "Fix with: git config user.email '$declared_email' && git rebase -i --exec 'git commit --amend --no-edit --reset-author'" >&2
+  echo "Fix with: git config user.name '$declared_name' && git config user.email '$declared_email'" >&2
+  echo "          git rebase -i --exec 'git commit --amend --no-edit --reset-author'" >&2
   echo "See standards/GIT.md 'Authorship'." >&2
 fi
 

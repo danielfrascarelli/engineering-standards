@@ -13,9 +13,11 @@ Owner of this topic: this file. No other document defines its own check list.
 | `typecheck` | Type checker. Fails on type errors. |
 | `test` | Test runner. Fails on regressions. |
 | `build` | Build command. Fails when artifact does not compile or bundle. |
-| `security` | Dependency audit plus secret scan. Fails on known critical vulnerability or leaked secret. |
+| `security` | Dependency audit plus secret scan. Fails on known critical vulnerability or leaked secret. Both operations MUST run. See ["The security check"](#the-security-check). |
 
 ## When each check runs
+
+Which checks are required at each moment. The order they run in is owned by [DELIVERY.md](DELIVERY.md); the listing below is not one.
 
 | Moment | Required |
 | --- | --- |
@@ -35,7 +37,41 @@ Repos MUST expose the six under stable script names. Reference implementations:
 | `typecheck` | `npm run typecheck` | `mypy .` or `pyright` |
 | `test` | `npm test` | `pytest` |
 | `build` | `npm run build` | `python -m build` |
-| `security` | `npm audit --audit-level=high` | `pip-audit` |
+| `security` | `npm run security` | `make security` |
+
+Note: `security` is one repository command on purpose. It wraps two operations, and a table cell holding only the dependency audit is how the secret scan went missing.
+
+## The security check
+
+`security` MUST:
+
+1. run a dependency audit;
+2. run a secret scanner over the repository;
+3. exit non-zero when either operation fails.
+
+A repo MUST declare what its `security` command wraps, in its local `AGENTS.md`:
+
+```md
+Checks:
+- security: npm run security
+  Runs: npm audit --audit-level=high && gitleaks detect --source . --redact
+```
+
+Scanner choice is the repo's. `gitleaks`, `trufflehog`, and a platform-provided scanner are all acceptable. MUST NOT count a platform scanner that only reports after merge: the check has to fail before the merge.
+
+Secret-scanning rules and the incident procedure are owned by [SECURITY.md](SECURITY.md).
+
+Reference wrappers:
+
+```json
+{ "scripts": { "security": "npm audit --audit-level=high && gitleaks detect --source . --redact" } }
+```
+
+```makefile
+security:
+	pip-audit
+	gitleaks detect --source . --redact
+```
 
 ## Rules
 

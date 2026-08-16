@@ -6,10 +6,8 @@ Applies to humans and agents. Agents follow this file, then add the duties in [.
 
 ## Before starting
 
-1. Read repo `README.md`.
-2. Read repo `AGENTS.md` for project facts and declared overrides.
-3. Read central standards relevant to the change. Ownership map: [../README.md](../README.md).
-4. Confirm task scope. Ambiguous? Ask before building.
+1. Read the documents in the order owned by [../README.md](../README.md), ["Read order"](../README.md#read-order). MUST. This file states no order of its own.
+2. Confirm task scope. Ambiguous? Ask before building. MUST.
 
 ## Workflow
 
@@ -39,6 +37,6 @@ Contribution MUST NOT:
 
 ## Review
 
-- Address a review comment by changing code, or by stating the technical reason for keeping it.
+- MUST address a review comment by changing the code, or by stating the technical reason for keeping it.
 - MUST NOT resolve a review thread without addressing its substance.
 - Disagreement that survives one round MUST go to the code owner. See [PR.md](PR.md).
