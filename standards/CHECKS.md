@@ -17,6 +17,8 @@ Owner of this topic: this file. No other document defines its own check list.
 
 ## When each check runs
 
+Which checks are required at each moment. The order they run in is owned by [DELIVERY.md](DELIVERY.md); the listing below is not one.
+
 | Moment | Required |
 | --- | --- |
 | Before commit | `format`, `lint` |
