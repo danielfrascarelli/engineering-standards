@@ -25,6 +25,7 @@ engineering-standards/
 │   ├── NESTJS.md
 │   ├── NODE.md
 │   ├── PYTHON.md
+│   ├── PYTHON_ML.md              # extends PYTHON.md, for services that ship a model
 │   └── REACT.md
 ├── tooling/
 │   └── PLUGINS.md                # approved tools and agent plugins

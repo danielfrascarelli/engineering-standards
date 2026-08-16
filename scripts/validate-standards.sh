@@ -44,6 +44,7 @@ REQUIRED=(
   stacks/NESTJS.md
   stacks/NODE.md
   stacks/PYTHON.md
+  stacks/PYTHON_ML.md
   stacks/REACT.md
   tooling/PLUGINS.md
   scripts/sync-standards.sh
