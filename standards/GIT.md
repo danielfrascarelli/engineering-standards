@@ -2,9 +2,22 @@
 
 Owner: branches, commit format, merge strategy, protected branches, what enters history.
 
-## Default branch
+## Default branches
 
-New repo MUST use `main`. `master` is legacy only. MUST NOT create new `master`.
+Every repo MUST have two long-lived branches:
+
+| Branch | Holds | Protected |
+| --- | --- | --- |
+| `main` | production: what is deployed, or deployable, right now | yes |
+| `develop` | development: finished work accumulating between releases | yes |
+
+- Both MUST be protected. Direct push to either MUST be disabled.
+- Every change to either MUST arrive through a pull request. MUST NOT commit directly to `main` or to `develop`.
+- `master` is legacy only. MUST NOT create a new `master`.
+- Feature work MUST branch off `develop` and merge back into `develop`.
+- `develop` MUST reach `main` through a release pull request. See [RELEASES.md](RELEASES.md).
+- `hotfix/` MUST branch off `main` and MUST merge into both `main` and `develop`. A hotfix landing only in `main` is reintroduced by the next release.
+- Note: where another standard says "integration branch", it means `develop`.
 
 ## Branches
 
@@ -22,6 +35,8 @@ One prefix per branch. Prefix maps to the commit type it produces:
 | `chore/` | maintenance | `chore` |
 | `ci/` | pipeline config | `ci` |
 | `build/` | build system, packaging, dependency bumps | `build` |
+
+Every prefix above branches off `develop`, except `hotfix/`, which branches off `main`.
 
 `hotfix/` is a branch prefix only. Conventional Commits has no `hotfix` type. Hotfix commits MUST use `fix`.
 
@@ -59,6 +74,7 @@ BREAKING CHANGE: removes v1 auth endpoint
 
 Rules:
 
+- Commit messages MUST be written in English. Owner of the language rule for commits: this file. Documentation and prose: [DOCUMENTATION.md](DOCUMENTATION.md). Code comments and user-facing copy: the repo's own `AGENTS.md`.
 - One commit, one logical intention. MUST.
 - Commit SHOULD build on its own.
 - MUST NOT mix formatting-only change with behavior change.
@@ -78,7 +94,7 @@ Three layers. Each has a distinct job. None is sufficient alone.
 
 ### Declaration
 
-Repo `AGENTS.md` MUST carry a `Git identity` block:
+Repo `AGENTS.md` MUST carry a `Git identity` block. The values below are an example of the shape, not the identity every repo uses:
 
 ```md
 Git identity:
@@ -86,6 +102,8 @@ Git identity:
 - user.email: dsanfra@gmail.com
 - gh account: danielfrascarelli   # pull request author, not checked by git hooks
 ```
+
+Identity differs between repos. MUST NOT copy another repo's block forward. MUST read the block from the repo being worked on, and MUST verify the local `git config` against it before the first commit — see "Application" below. That verification is the point of the declaration; the values themselves are per repo.
 
 `user.name` and `user.email` are the enforced pair. `gh account` records who opens pull requests and pushes; git carries no such field, so no hook can check it. A rule that claims otherwise is a rule nothing enforces. Enforce it, when a repo needs it, with a CI step reading `github.event.pull_request.user.login` against a separately declared list of allowed pull request authors. MUST NOT state or imply that a git hook validates it.
 
@@ -161,11 +179,11 @@ Secret leaked into history? Follow the incident steps in [SECURITY.md](SECURITY.
 
 ## Protected branches
 
-Typically protected:
+Always protected:
 
 ```text
 main
-production
+develop
 release/*
 ```
 

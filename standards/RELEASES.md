@@ -38,6 +38,14 @@ Notes SHOULD be generated from Conventional Commit types. That is why commit typ
 
 Repo keeping a `CHANGELOG.md` MUST update it in the release PR, not after the tag.
 
+## Release flow
+
+Branch roles are owned by [GIT.md](GIT.md). What a release does with them:
+
+- A release MUST reach `main` through a pull request from `develop`, or from a `release/*` branch cut off `develop`.
+- The tag MUST be created on `main`, on the merged release commit.
+- A `hotfix/` released straight from `main` MUST be merged back into `develop` before the next release. Otherwise the next release reintroduces the bug it fixed.
+
 ## Before release
 
 - All six checks pass on the release commit. MUST. See [CHECKS.md](CHECKS.md).

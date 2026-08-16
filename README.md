@@ -90,7 +90,7 @@ One topic, one owner file. Other files link. They MUST NOT restate.
 | Read order, which documents apply to a change | this file, ["Read order"](#read-order) |
 | Local workspace setup, plugin install commands | [docs/workspace-setup.md](docs/workspace-setup.md) |
 | Agent-only rules | [AGENTS.md](AGENTS.md) |
-| Documentation expectations | [standards/DOCUMENTATION.md](standards/DOCUMENTATION.md) |
+| Documentation expectations, prose language | [standards/DOCUMENTATION.md](standards/DOCUMENTATION.md) |
 | Versioning, tags, release notes | [standards/RELEASES.md](standards/RELEASES.md) |
 | Approved tools and plugins | [tooling/PLUGINS.md](tooling/PLUGINS.md) |
 | Stack rules | [stacks/](stacks/) |
@@ -131,6 +131,8 @@ Apply in this order. Lower number wins.
 3. Stack standards, `stacks/`.
 4. Global standards, `standards/` and `AGENTS.md`.
 5. Tool defaults.
+
+Within level 3, the more specific stack document wins. A document declaring "Extends X" narrows X; where the two disagree, the extending document is the rule. `REACT.md` allowing only Vitest beats `NODE.md` allowing Vitest or Jest, for a React repo. The extending document MUST NOT loosen a MUST it inherits — only narrow it.
 
 Explicit override means the local `AGENTS.md` names the central rule it replaces, plus a reason. The shape is fixed so CI can check it: `Replaces <file> "<rule>"`, and a `Reason:`.
 

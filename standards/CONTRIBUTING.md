@@ -11,7 +11,7 @@ Applies to humans and agents. Agents follow this file, then add the duties in [.
 
 ## Workflow
 
-1. Branch off `main` with the right prefix. See [GIT.md](GIT.md).
+1. Branch off `develop` with the right prefix. A `hotfix/` branches off `main`. See [GIT.md](GIT.md).
 2. Make smallest coherent change.
 3. Add or update tests. See [TESTING.md](TESTING.md).
 4. Update docs when behavior changes. See [DOCUMENTATION.md](DOCUMENTATION.md).
@@ -39,4 +39,4 @@ Contribution MUST NOT:
 
 - MUST address a review comment by changing the code, or by stating the technical reason for keeping it.
 - MUST NOT resolve a review thread without addressing its substance.
-- Disagreement that survives one round goes to the code owner. See [PR.md](PR.md).
+- Disagreement that survives one round MUST go to the code owner. See [PR.md](PR.md).
