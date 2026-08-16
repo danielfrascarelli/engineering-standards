@@ -1,10 +1,12 @@
-# Machine Learning Standards
+# Python ML Standards
 
 Extends [PYTHON.md](PYTHON.md). Everything there applies. This file covers only what is specific to shipping models.
 
 Global rules are not repeated here. Ownership map: [../README.md](../README.md).
 
-Scope: services that load a trained model and make a decision with it. Training pipelines and research notebooks are out of scope until this document says otherwise.
+Scope: Python services that load a trained model and make a decision with it. The rules below assume Python types, Python packaging, and Python async semantics, which is why the file is named for the language it binds to. Training pipelines and research notebooks are out of scope until this document says otherwise.
+
+A language-neutral ML standard MAY be added later, for the rules that hold regardless of runtime. MUST NOT assume this file is that document.
 
 ## Runtime and version
 
@@ -38,7 +40,7 @@ Follows [PYTHON.md](PYTHON.md). No additions.
 
 ## Determinism
 
-- Random seeds MUST be set in any inference or evaluation path, and MUST be logged with the result.
+- Random seeds MUST be set in any inference or evaluation path, and MUST be recorded with the result. Recorded means retrievable for reproduction — an evaluation record or a controlled store. It does not mean an application log line; see [Logging](#logging).
 - A result that cannot be reproduced from the recorded inputs, model version, and seed MUST be treated as unexplained, not as noise.
 - Preprocessing MUST be deterministic. Any augmentation or sampling in an inference path MUST be seeded and documented.
 
@@ -57,7 +59,9 @@ Follows [PYTHON.md](PYTHON.md). No additions.
 
 ## Logging
 
-- Every decision MUST log: model identifier and version, threshold set, score, outcome, and seed.
+- Every decision MUST record the model identifier and version, and the threshold set in force.
+- Aggregate evaluation and operational metrics MUST be recorded. Those are what detect a regression, and they carry no per-person payload.
+- Per-decision score, threshold, outcome, and seed MUST NOT enter application logs unless the repo documents legal purpose, retention, access control, and redaction in its own security documentation. A score attached to a request is derived biometric data about one identifiable person, the same class as the embedding two rules down, and [../standards/SECURITY.md](../standards/SECURITY.md) forbids logging sensitive personal data unless it is explicitly required and protected.
 - Raw inputs MUST NOT be logged. A face, a fingerprint, or a document image in a log file is a data breach with extra steps. See [../standards/SECURITY.md](../standards/SECURITY.md).
 - Embeddings MUST NOT be logged. They are derived personal data and, for biometrics, are often reversible enough to matter.
 - Inference latency SHOULD be recorded per stage, so a regression can be attributed.

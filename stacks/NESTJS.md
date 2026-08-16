@@ -4,10 +4,40 @@ Extends [NODE.md](NODE.md). Everything there applies. This file covers only what
 
 Global rules are not repeated here. Ownership map: [../README.md](../README.md).
 
+## Reference stack
+
+The libraries a NestJS service in this workspace is expected to use. A repo departing from a row MUST record the reason in its own `AGENTS.md`.
+
+| Concern | Choice |
+| --- | --- |
+| Runtime | Node active LTS, pinned per [NODE.md](NODE.md) |
+| Framework | NestJS 11 + Express, TypeScript strict |
+| API docs | `@nestjs/swagger`, UI at `/docs`, bearer auth |
+| Validation | `class-validator` / `class-transformer`, global `ValidationPipe` |
+| Config | `@nestjs/config` + Joi env schema, fail-fast |
+| Auth | `@nestjs/jwt`, access + refresh, bcrypt |
+| Rate limiting | `@nestjs/throttler`, global guard |
+| Security | helmet, CORS allowlist, cookie-parser, compression |
+| Health | `@nestjs/terminus` |
+| Logging | `nestjs-pino`, structured JSON, request id, redaction |
+| Tracing | OpenTelemetry, opt-in via `OTEL_ENABLED` |
+| Error tracking | `@sentry/node`, opt-in via `SENTRY_DSN`, unexpected 500s only, secrets scrubbed |
+| Resilience | `opossum` circuit breaker around outbound upstreams |
+| API contract | committed `openapi.json`, exported by script, diff-checked in CI |
+| Supply chain | audit gate on production dependencies + automated updates. See [../standards/DEPENDENCIES.md](../standards/DEPENDENCIES.md) |
+| ORM | Prisma + `@prisma/client`, migrations + seed |
+| Outbound HTTP | `@nestjs/axios` |
+| Scheduling | `@nestjs/schedule` |
+| WebSockets | `@nestjs/websockets` + socket.io |
+| Tests | Jest — unit / integration / e2e. See [Testing](#testing) |
+| Git hooks | husky + lint-staged + commitlint |
+| Production process | PM2, fork mode, graceful shutdown |
+
+Note: which database engine, which upstream services, which socket namespaces, and which schedules a service runs are project facts, not stack rules. They belong in the consuming repo's `AGENTS.md`. See [../README.md](../README.md), "Consuming repo".
+
 ## Runtime and version
 
-- Node version MUST be pinned in three places that agree: `.nvmrc`, `engines.node` in `package.json`, and CI's `node-version-file`. Two out of three is drift waiting to happen.
-- `packageManager` MUST be declared in `package.json`. One package manager everywhere: local, CI, and container. A repo whose CI uses npm and whose Dockerfile uses pnpm builds against unlocked dependencies.
+- Node and package-manager pinning: [NODE.md](NODE.md), which owns that rule. NestJS adds nothing to it.
 - NestJS major version MUST be stated in the README, and corrected in the same PR that bumps it.
 
 ## Language and types
@@ -20,7 +50,7 @@ Global rules are not repeated here. Ownership map: [../README.md](../README.md).
 
 ## Project structure
 
-Three layers under `src/`:
+Four top-level directories under `src/`:
 
 ```text
 src/modules/<feature>/    HTTP surface and domain logic
@@ -31,7 +61,6 @@ src/observability/        tracing and error reporting, loaded before DI exists
 
 - Dependency direction MUST be `modules` to `data` to ORM. `common/` is importable from anywhere.
 - Feature module MUST NOT inject the ORM client directly. It goes through an accessor in `src/data/`. Health checks are the usual carve-out, and the carve-out MUST be written down where the rule is stated.
-- A rule expressed as "this grep must return nothing" MUST actually run in CI, or be rewritten as a lint boundary rule. An invariant nobody executes is already false.
 - File name MUST be `<subject>.<role>.ts`, kebab-case. Roles: `.module.ts`, `.controller.ts`, `.service.ts`, `.dto.ts`, `.guard.ts`, `.interceptor.ts`, `.decorator.ts`, `.gateway.ts`, `.mapper.ts`, `.accessor.ts`, `.health-indicator.ts`.
 - One casing convention repo-wide. `LoginRequest.dto.ts` sitting beside `register.ts` MUST NOT happen.
 - Class suffix MUST match the file suffix.
@@ -39,13 +68,13 @@ src/observability/        tracing and error reporting, loaded before DI exists
 - MUST NOT create barrel `index.ts` files.
 - `paths` aliases MUST be declared in `tsconfig.json` and mirrored in the Jest `moduleNameMapper`. Relative imports climbing more than one directory MUST NOT be used.
 - Versioned HTTP surface MUST live at `src/modules/api/v<N>/<feature>/`, so URL version and directory version always agree.
-- Bidirectional module dependency MUST be broken with a `@Global()` provider module, not `forwardRef`.
+- A bidirectional module or provider dependency MUST be removed by extracting the shared provider or module. `@Global()` and `forwardRef()` MUST NOT be used to mask a cycle. `@Global()` only changes where exports are visible, and `forwardRef()` only defers resolution; neither removes the coupling that made the cycle, and both hide it from the next reader.
 - `forRootAsync` options factories MUST live in their own `*.options.ts` file. `AppModule` MUST NOT hold inline configuration objects.
 - One exported `configureApp(app)` MUST be shared by `main.ts`, the OpenAPI export script, and the e2e bootstrap. Global prefix and versioning duplicated across three files will drift, and the drift surfaces as tests asserting a response shape production never emits.
 
 ## Lint and format
 
-- `lint` MUST be check-only, with `--max-warnings 0`. A `lint` script carrying `--fix` cannot fail CI on anything auto-fixable, and in CI it silently repairs files whose fixes never reach the branch. Provide `lint:fix` separately.
+- Gate integrity, including check-only lint and `--max-warnings 0`: [../standards/DELIVERY.md](../standards/DELIVERY.md). NestJS adds `lint:fix` as the separate mutating command.
 - Type-aware linting MUST be enabled: `projectService: true` with `tsconfigRootDir`.
 - Formatting SHOULD be enforced through the linter, so one command gates style and correctness together.
 - Husky MUST be installed via `prepare`. `pre-commit` runs lint-staged, `commit-msg` runs commitlint.
@@ -66,14 +95,29 @@ Commands: [../standards/CHECKS.md](../standards/CHECKS.md).
 
 ## Validation
 
-Global pipe MUST be exactly:
+A global `ValidationPipe` MUST be registered, and it MUST set:
+
+| Option | Value | Why it is not optional |
+| --- | --- | --- |
+| `whitelist` | `true` | strips properties no DTO declares |
+| `forbidNonWhitelisted` | `true` | rejects them instead of stripping silently |
+| `transform` | `true` | applies `@Type` coercion before validators run |
+| `exceptionFactory` | the service's own | maps validation failures onto the documented error body |
+
+The `exceptionFactory` MUST take the framework's `ValidationError[]` and return an exception whose response body is the uniform `{ statusCode, code, message }` defined under [Errors](#errors), with `code` set to the service's validation error code. Without it, validation failures are the one error shape that escapes the contract every other failure path follows.
 
 ```ts
+// Shape, not a drop-in: the error code enum and the body live in the service.
 new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,
   transform: true,
-  exceptionFactory: validationExceptionFactory,
+  exceptionFactory: (errors: ValidationError[]) =>
+    new BadRequestException({
+      statusCode: 400,
+      code: ErrorCode.ValidationFailed,
+      message: formatValidationErrors(errors),
+    }),
 })
 ```
 
@@ -109,7 +153,7 @@ Leaving `forbidNonWhitelisted` unset silently strips unknown properties instead 
 - Every request MUST carry a correlation identifier, generated in `genReqId` and present on every log line. Threading a request id through function signatures without ever binding it to the logger leaves logs uncorrelated.
 - Pretty-printed output MUST be development only. Production logs are raw JSON on stdout.
 - One canonical list of sensitive field names MUST exist, applied to every egress channel: logger redaction and error-tracker `beforeSend` and `beforeBreadcrumb`. A new sensitive field lands in all of them in the same commit.
-- One logger injection style per repo. Pick injected `PinoLogger` with `setContext`, or `new Logger(ClassName.name)`, and state which.
+- One logger injection style per repo. MUST pick either injected `PinoLogger` with `setContext` or `new Logger(ClassName.name)`, and MUST state which in the README.
 - Telemetry and metering code MUST swallow its own failures. A metrics write MUST NOT break a request.
 - The tracing bootstrap MUST be the first import of `main.ts`, before anything else loads, or auto-instrumentation cannot patch modules.
 
@@ -134,7 +178,6 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Ne
 - CORS MUST come from an env-driven allowlist, with the same list passed to the WebSocket adapter. `origin: true` or `*` combined with `credentials: true` MUST NOT be used.
 - The rate-limit guard MUST be global, backed by a shared store when more than one instance runs. It MUST stay active in the test environment, or no test ever covers it.
 - Swagger UI MUST NOT be served unauthenticated in production.
-- Deploy scripts MUST NOT print an environment file. `cat .env` puts every production secret into the deployment log.
 
 ## Persistence
 
@@ -165,18 +208,20 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Ne
 
 ## Health and shutdown
 
-Three endpoints MUST exist, public and version-neutral:
+Three endpoints MUST exist, version-neutral, with the exposure each one is allowed:
 
-| Route | Checks | Answers |
-| --- | --- | --- |
-| `/health/live` | nothing | is the process up |
-| `/health/ready` | datastore only | can it serve traffic |
-| `/health/dependencies` | external upstreams | is anything degraded |
+| Route | Checks | Answers | Exposure |
+| --- | --- | --- | --- |
+| `/health/live` | nothing | is the process up | MAY be public |
+| `/health/ready` | datastore only | can it serve traffic | private |
+| `/health/dependencies` | external upstreams | is anything degraded | private |
 
+- `/health/live` MAY be public when the platform requires an unauthenticated probe, and MUST then return a status only — no dependency names, no versions, no error text.
+- `/health/ready` and `/health/dependencies` MUST be reachable only by orchestration, through network policy or authentication. Naming your upstreams and their current state to an unauthenticated caller hands over a map of what to attack and when it is already weak. See [../standards/SECURITY.md](../standards/SECURITY.md).
 - A degraded third party MUST NOT make the app report not-ready. Otherwise someone else's outage pulls the whole fleet out of the load balancer.
 - `app.enableShutdownHooks()` MUST be called.
 - Teardown MUST run through `onModuleDestroy` lifecycle hooks, not custom `process.on('SIGTERM')` handlers in application code. A handler that calls `process.exit()` can kill the process before Nest has drained.
-- Shutdown order: stop accepting new work, disconnect WebSocket clients, let in-flight work finish, close the datastore last.
+- Shutdown MUST run in this order: stop accepting new work, disconnect WebSocket clients, let in-flight work finish, close the datastore last.
 - Every outbound third-party call MUST have a timeout and SHOULD have a circuit breaker, through exactly one code path.
 
 ## Testing
@@ -191,7 +236,6 @@ Three levels, distinct non-overlapping suffixes:
 
 - Suffixes MUST be chosen so the unit `testRegex` cannot match the other two.
 - `test:all` MUST run all three in sequence. "Tests pass" means `test:all`, not unit only.
-- Every level MUST run in CI. A suite excluded from CI because it binds a socket only ever ran on one laptop.
 - Database-touching suites MUST be guarded twice: a setup file that throws unless the test database URL is set and identifiable, and a per-spec explicit datasource URL. Ambient `.env` MUST NOT be trusted. A mistake here truncates the development database.
 - Test data MUST be cleared in explicit foreign-key-safe order by a shared helper. MUST NOT rely on cascade or on test ordering.
 - Integration and e2e suites MUST use one shared harness that replays the production bootstrap in the same order.
@@ -201,11 +245,10 @@ Three levels, distinct non-overlapping suffixes:
 - Unit tests SHOULD construct the class directly with `jest.fn()` collaborators. Reserve `Test.createTestingModule` for tests that genuinely need the container.
 - A controller unit test SHOULD assert delegation only. Business assertions belong in the service spec.
 - A test app that cannot start MUST throw, never skip. A silently skipped suite is a false green.
-- Coverage threshold MUST be set in the Jest config **and** a coverage-enabled command MUST run in CI. A threshold CI never executes is not a gate.
 - `collectCoverageFrom` SHOULD exclude `*.module.ts`, `*.dto.ts`, `main.ts`, and test files.
 - An out-of-scope bug found mid-task SHOULD be recorded in a findings document and pinned with a test asserting the current behavior, so the eventual fix fails loudly. See [../standards/DOCUMENTATION.md](../standards/DOCUMENTATION.md).
 
-Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md).
+Strategy and coverage stance: [../standards/TESTING.md](../standards/TESTING.md). Coverage threshold as a gate, and which suites CI runs: [../standards/DELIVERY.md](../standards/DELIVERY.md).
 
 ## CI
 
