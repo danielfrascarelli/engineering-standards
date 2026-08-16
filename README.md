@@ -1,126 +1,224 @@
 # Engineering Standards
 
-Centralized engineering rules for all repositories in an organization or personal workspace.
+Central rules for every repository in this workspace.
 
-The goal is simple: keep shared rules in one place, avoid copy/paste drift, and make every repository consume the same source of truth.
+One source of truth. No copy/paste drift. Every repo consumes same rules.
 
-## What this repository contains
-
-- `AGENTS.md` — universal rules for AI coding agents and automated contributors.
-- `GIT.md` — branch, commit, rebase, merge, and repository hygiene rules.
-- `SECURITY.md` — non-negotiable security rules.
-- `TESTING.md` — testing philosophy and minimum expectations.
-- `PR.md` — pull request creation and review rules.
-- `PLUGINS.md` — approved tools, plugins, and agent integrations, including `juliusbrussee/caveman`.
-- `CONTRIBUTING.md` — contributor workflow and repository expectations.
-- `DEPENDENCIES.md` — dependency management rules.
-- `DOCUMENTATION.md` — documentation standards.
-- `RELEASES.md` — versioning and release conventions.
-- `stacks/REACT.md` — React-specific standards.
-- `stacks/NODE.md` — Node.js-specific standards.
-- `stacks/PYTHON.md` — Python-specific standards.
-
-## Source of truth model
-
-Keep global rules here. Keep only project-specific exceptions inside each application repository.
-
-Example application repository:
+## Layout
 
 ```text
-my-app/
-├── AGENTS.md
-├── README.md
-├── package.json
-└── src/
+engineering-standards/
+├── AGENTS.md                     # rules for AI agents and automated contributors
+├── README.md                     # this file: model, precedence, consumption
+├── standards/
+│   ├── CHECKS.md                 # canonical validation check names
+│   ├── CONTRIBUTING.md           # contributor workflow
+│   ├── DEPENDENCIES.md           # dependency intake, licenses, pinning, patching
+│   ├── DOCUMENTATION.md          # documentation rules
+│   ├── GIT.md                    # branches, commits, merge, protected branches
+│   ├── PR.md                     # pull request rules
+│   ├── RELEASES.md               # versioning, tags, release notes
+│   ├── SECURITY.md               # mandatory security rules
+│   └── TESTING.md                # test strategy
+├── stacks/
+│   ├── NODE.md
+│   ├── PYTHON.md
+│   └── REACT.md
+├── tooling/
+│   └── PLUGINS.md                # approved tools and agent plugins
+├── scripts/
+│   ├── sync-standards.sh         # copy standards into consuming repo
+│   ├── validate-standards.sh     # enforce this repo's own rules
+│   └── hooks/                    # reference git hooks for consuming repos
+│       ├── commit-msg            # rejects AI-agent trailers
+│       ├── install.sh
+│       └── pre-push              # rejects commits with the wrong author
+└── .github/
+    ├── CODEOWNERS
+    ├── pull_request_template.md
+    └── workflows/
+        └── validate-standards.yml
 ```
+
+`AGENTS.md` stays at root. Agent tooling looks for it there.
+
+## Rule strength
+
+Every rule carries one keyword. Keyword decides what happens when rule is inconvenient.
+
+| Keyword | Meaning |
+| --- | --- |
+| MUST, MUST NOT | Mandatory. Violation blocks merge. Needs declared override to bypass. |
+| SHOULD, SHOULD NOT | Default. Deviate only with reason written in PR description. |
+| MAY | Allowed. No preference. |
+
+MUST rules in [SECURITY.md](standards/SECURITY.md) are never overridable.
+
+Never write a rule without a keyword. Keywordless prose is guidance, not standard.
+
+## Ownership map
+
+One topic, one owner file. Other files link. They MUST NOT restate.
+
+| Topic | Owner |
+| --- | --- |
+| Check names, when checks run | [standards/CHECKS.md](standards/CHECKS.md) |
+| Secrets, authorization, crypto, log redaction | [standards/SECURITY.md](standards/SECURITY.md) |
+| Dependency intake, licenses, pinning, vulnerability patching | [standards/DEPENDENCIES.md](standards/DEPENDENCIES.md) |
+| Branches, commit format, merge, protected branches | [standards/GIT.md](standards/GIT.md) |
+| PR size, description fields, review, approvals | [standards/PR.md](standards/PR.md) |
+| Test strategy, coverage stance | [standards/TESTING.md](standards/TESTING.md) |
+| Human contributor workflow | [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md) |
+| Agent-only rules | [AGENTS.md](AGENTS.md) |
+| Documentation expectations, prose language | [standards/DOCUMENTATION.md](standards/DOCUMENTATION.md) |
+| Versioning, tags, release notes | [standards/RELEASES.md](standards/RELEASES.md) |
+| Approved tools and plugins | [tooling/PLUGINS.md](tooling/PLUGINS.md) |
+| Stack rules | [stacks/](stacks/) |
+
+Found same rule in two files? That is a bug. Delete duplicate, keep link to owner.
+
+## Precedence
+
+Apply in this order. Lower number wins.
+
+1. Security and legal MUST rules. Never overridable.
+2. Repo-specific rule that **declares an explicit override**.
+3. Stack standards, `stacks/`.
+4. Global standards, `standards/` and `AGENTS.md`.
+5. Tool defaults.
+
+Within level 3, the more specific stack document wins. A document declaring "Extends X" narrows X; where the two disagree, the extending document is the rule. `REACT.md` allowing only Vitest beats `NODE.md` allowing Vitest or Jest, for a React repo. The extending document MUST NOT loosen a MUST it inherits — only narrow it.
+
+Explicit override means local `AGENTS.md` names central rule it replaces, plus reason:
+
+```md
+## Overrides
+
+- Replaces standards/GIT.md "Rebase local feature work when it improves history clarity".
+  This repo forbids rebase. Reason: feature branches are shared between three teams.
+```
+
+Repo rule that does not declare an override does not win. Undeclared conflict resolves to central rule.
+
+Security MUST rules stay in force regardless of any declared override.
+
+## Consuming repo
+
+Keep only project-specific facts and declared overrides locally. Do not duplicate central rules.
 
 Recommended local `AGENTS.md`:
 
 ```md
 # Project Agent Rules
 
-Apply the central engineering standards first.
+Central standards apply first. See .standards/README.md for precedence.
 
-Project-specific rules:
+Project facts:
 - Runtime: Node.js 22
 - Package manager: pnpm
 - Test runner: Vitest
 - Deployment target: AWS Lambda
 - Database: PostgreSQL
 
-Local rules override central rules only when explicitly stated.
+Git identity (see .standards/standards/GIT.md, "Authorship"):
+- user.name:  danielfrascarelli
+- user.email: dsanfra@gmail.com
+- gh account: danielfrascarelli
+
+Checks (see .standards/standards/CHECKS.md):
+- format: pnpm format:check
+- lint: pnpm lint
+- typecheck: pnpm typecheck
+- test: pnpm test
+- build: pnpm build
+- security: pnpm audit --audit-level=high
+
+## Overrides
+(none)
 ```
 
-## Recommended consumption strategies
+## Consumption strategies
 
-### Option A — Git submodule
+### Option A, git submodule
 
-Add this repository under a predictable path:
+Pin standards revision per repo:
 
 ```bash
-git submodule add <engineering-standards-repo-url> .standards
+git submodule add https://github.com/danielfrascarelli/engineering-standards.git .standards
 ```
 
-Then tools and agents can read:
+Agents then read `.standards/AGENTS.md`, `.standards/standards/GIT.md`, `.standards/stacks/NODE.md`.
 
-```text
-.standards/AGENTS.md
-.standards/GIT.md
-.standards/stacks/REACT.md
+Use when you want explicit version pinning.
+
+### Option B, sync script
+
+Copy selected files into consuming repo:
+
+```bash
+./scripts/sync-standards.sh --target /path/to/my-app
 ```
 
-Use this when you want explicit version pinning per repository.
-
-### Option B — Sync script
-
-Maintain a small script that pulls selected files from this repository and generates local copies.
-
-Generated files should begin with:
+Script writes generated copies under `.standards/` in target repo. Every generated file starts with:
 
 ```md
-<!-- GENERATED FILE. DO NOT EDIT DIRECTLY. -->
+<!-- GENERATED FILE. DO NOT EDIT DIRECTLY. Source: engineering-standards@<rev> -->
 ```
 
-Use this when agents require rules to exist physically inside each repository.
+Generated rule files ARE committed in consuming repo. This is the declared exception to the build-artifact rule in [standards/GIT.md](standards/GIT.md).
 
-### Option C — CI validation
+Use when agents need rules physically present.
 
-Add CI that verifies repositories are using the expected standards revision.
+### Option C, CI validation
 
-The CI job should fail when:
-- required standards are missing;
-- generated rule files are stale;
-- a local rule silently overrides a central mandatory rule;
-- security requirements are removed.
+[.github/workflows/validate-standards.yml](.github/workflows/validate-standards.yml) validates this repo. Consuming repos SHOULD run an equivalent job that fails when:
 
-## Precedence
+- required standards files are missing;
+- generated rule files are stale against pinned revision;
+- local rule overrides a central rule without an `## Overrides` entry;
+- a security MUST rule was removed locally.
 
-Use this order:
+## Stack document template
 
-1. Security and legal requirements.
-2. Explicit repository-specific rules.
-3. Stack-specific standards.
-4. Global engineering standards.
-5. Tool defaults.
+Every file in `stacks/` MUST use this section order. Missing section means stack doc is incomplete.
 
-Project-specific rules should be minimal. Do not duplicate central rules locally.
+```md
+# <Stack> Standards
+## Runtime and version
+## Language and types
+## Project structure
+## Lint and format
+## Errors
+## Logging
+## Security notes
+## Testing
+```
+
+Extra sections MAY be added where they fit. The eight above MUST still appear, in this relative order.
+
+Stack docs MUST NOT restate global rules. Link to owner instead.
+
+`scripts/validate-standards.sh` enforces this.
 
 ## Updating standards
 
-1. Change the rule here.
-2. Review the change like production code.
-3. Merge it.
-4. Update consuming repositories automatically or intentionally.
-5. Avoid manual copy/paste.
+1. Change rule here.
+2. Review like production code. See [standards/PR.md](standards/PR.md).
+3. Merge.
+4. Bump consuming repos: submodule pointer, or rerun sync script.
+5. Never copy/paste by hand.
+
+Rule change that tightens a MUST is a breaking change. See [standards/RELEASES.md](standards/RELEASES.md).
 
 ## Rule design principles
 
-Good rules are:
+Good rule is:
+
 - explicit;
+- carries a strength keyword;
 - testable when possible;
-- short enough to be read by humans and agents;
-- technology-aware;
-- free of duplicated guidance;
+- short enough for human and agent;
+- owned by exactly one file;
 - opinionated where consistency matters.
 
-Avoid vague rules such as "write clean code". Prefer rules that can guide a concrete decision.
+Bad rule: "write clean code". No keyword, no owner, no test. Delete it.

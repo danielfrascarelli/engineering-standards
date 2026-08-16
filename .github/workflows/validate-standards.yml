@@ -1,0 +1,21 @@
+name: validate-standards
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the authorship check scans every commit.
+          fetch-depth: 0
+
+      - name: Validate standards repository
+        run: ./scripts/validate-standards.sh

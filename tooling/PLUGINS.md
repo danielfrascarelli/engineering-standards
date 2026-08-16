@@ -1,72 +1,70 @@
 # Plugins and Tooling Standards
 
-This file defines approved or recommended engineering tools and agent plugins.
+Owner: approved agent plugins, AI tool policy, tool intake.
 
-## General rules
+Stack toolchains are not here. They live with each stack: [../stacks/](../stacks/).
+Library and package rules are not here. They live in [../standards/DEPENDENCIES.md](../standards/DEPENDENCIES.md).
 
-- Prefer existing repository tooling over introducing alternatives.
-- Do not install a new tool that duplicates an existing capability without a clear reason.
-- Pin versions when reproducibility matters.
-- Review permissions before enabling plugins with repository, shell, cloud, or secret access.
-- Treat agent plugins as executable tooling, not passive documentation.
+## Tool intake
 
-## Caveman
+- SHOULD prefer existing repo tooling over introducing an alternative.
+- MUST NOT install a tool that duplicates an existing capability without a stated reason.
+- MUST review permissions before enabling a plugin with repository, shell, cloud, or secret access.
+- MUST treat an agent plugin as executable tooling, not passive documentation.
+- Plugin version pinning follows [../standards/DEPENDENCIES.md](../standards/DEPENDENCIES.md).
 
-Plugin:
+## Approved agent plugins
 
-```text
-juliusbrussee/caveman
+These are installed in every workspace. Not examples — the actual set.
+
+| Plugin | Marketplace | Purpose |
+| --- | --- | --- |
+| `caveman` | `JuliusBrussee/caveman` | terse agent output, less conversational noise |
+| `frontend-design` | `claude-plugins-official` | visual design guidance for UI work |
+
+Install:
+
+```bash
+claude plugin marketplace add JuliusBrussee/caveman
+claude plugin install caveman@caveman
+
+claude plugin install frontend-design@claude-plugins-official
 ```
 
-Purpose:
+Resulting `~/.claude/settings.json` fragment:
 
-- concise agent behavior;
-- direct execution-oriented responses;
-- reduced conversational noise;
-- practical engineering workflow assistance.
-
-Recommended usage:
-
-- use for focused coding and repository tasks;
-- combine with repository-specific `AGENTS.md` rules;
-- never allow plugin behavior to override security, legal, or repository-specific constraints.
-
-## JavaScript / TypeScript
-
-Recommended baseline:
-
-```text
-TypeScript
-ESLint
-Prettier
-Vitest or Jest
-```
-
-Choose one formatter and one primary lint strategy per repository.
-
-## Python
-
-Recommended baseline:
-
-```text
-Ruff
-Pytest
-mypy or pyright when static typing is enforced
-```
-
-## AI coding tools
-
-Examples:
-
-```text
-OpenAI Codex
-Claude Code
-GitHub Copilot
+```json
+{
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "frontend-design@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": { "source": "github", "repo": "JuliusBrussee/caveman" }
+    }
+  }
+}
 ```
 
 Rules:
 
-- agents must follow the same code review and testing standards as human contributors;
-- generated code is not exempt from review;
-- never provide secrets to a tool unless explicitly approved and required;
-- repository write permissions should follow least privilege.
+- Plugin output style MUST NOT override a security, legal, or repo-specific constraint.
+- Plugin behavior MUST NOT change what gets committed, only how the agent speaks.
+- Adding a plugin to this table needs a PR. See [../standards/PR.md](../standards/PR.md).
+
+## Approved AI coding tools
+
+```text
+Claude Code
+```
+
+Other tools MAY be used for exploration. Committing their output makes them subject to every rule here.
+
+Rules:
+
+- Generated code MUST pass the same review, checks, and tests as hand-written code. See [../standards/CHECKS.md](../standards/CHECKS.md).
+- Generated code is never exempt from review. MUST.
+- MUST NOT give a tool a secret unless it is approved and required. See [../standards/SECURITY.md](../standards/SECURITY.md).
+- Repository write permission for a tool MUST follow least privilege. No token with protected-branch write.
+- Agent duties: [../AGENTS.md](../AGENTS.md).

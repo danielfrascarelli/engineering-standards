@@ -1,29 +1,64 @@
 # Release Standards
 
+Owner: versioning, tags, release notes, production change discipline.
+
 ## Versioning
 
-Use Semantic Versioning when the project exposes a versioned artifact or public API:
+Project exposing a versioned artifact or public API MUST use Semantic Versioning.
 
 ```text
 MAJOR.MINOR.PATCH
 ```
 
 - MAJOR: incompatible change.
-- MINOR: backwards-compatible functionality.
+- MINOR: backwards-compatible capability.
 - PATCH: backwards-compatible fix.
 
-## Release preparation
+Pre-1.0 project MAY break on MINOR. It MUST say so in the README.
 
-Before release:
+## Tags
 
-- required tests pass;
-- build succeeds;
-- migration requirements are documented;
-- breaking changes are explicit;
-- release notes are updated when applicable.
+- Release MUST be tagged `vMAJOR.MINOR.PATCH`, for example `v2.4.1`.
+- Tag MUST be annotated, not lightweight.
+- Tag MUST point at the commit that was built and shipped.
+- MUST NOT move or delete a published tag. Ship a new patch instead.
+
+Long-lived release branches use `release/*` and are protected. See [GIT.md](GIT.md).
+
+## Release notes
+
+Every release MUST have notes covering:
+
+- breaking changes, listed first and explicitly;
+- new capabilities;
+- fixes;
+- migration steps, when action is required.
+
+Notes SHOULD be generated from Conventional Commit types. That is why commit type accuracy matters. See [GIT.md](GIT.md).
+
+Repo keeping a `CHANGELOG.md` MUST update it in the release PR, not after the tag.
+
+## Release flow
+
+Branch roles are owned by [GIT.md](GIT.md). What a release does with them:
+
+- A release MUST reach `main` through a pull request from `develop`, or from a `release/*` branch cut off `develop`.
+- The tag MUST be created on `main`, on the merged release commit.
+- A `hotfix/` released straight from `main` MUST be merged back into `develop` before the next release. Otherwise the next release reintroduces the bug it fixed.
+
+## Before release
+
+- All six checks pass on the release commit. MUST. See [CHECKS.md](CHECKS.md).
+- No critical vulnerability open in a production dependency. MUST. See [DEPENDENCIES.md](DEPENDENCIES.md).
+- Migration requirements documented. MUST. See [DOCUMENTATION.md](DOCUMENTATION.md).
+- Rollback path known and written down. MUST.
 
 ## Production changes
 
-Production releases should be reproducible from source control.
+- Production release MUST be reproducible from source control.
+- MUST NOT make an undocumented manual production change.
+- Emergency manual change MUST be recorded and reconciled back into source control before the next release.
 
-Avoid undocumented manual production changes.
+## Versioning this standards repo
+
+This repo is itself versioned. Tightening a MUST rule, or adding a new MUST, is a MAJOR change for consuming repos. Relaxing a rule, or adding a SHOULD, is MINOR.

@@ -1,35 +1,64 @@
 # Documentation Standards
 
-## Principles
+Owner: what to document, README shape, comment rules, decision records.
 
-Documentation should explain information that code alone cannot communicate efficiently.
+## Principle
 
-Document:
+Docs carry what code cannot carry efficiently. Intent, constraints, operations.
+
+MUST document:
 
 - setup requirements;
-- architecture decisions;
 - public APIs;
-- environment variables;
-- operational procedures;
+- environment variables, including which are secrets;
+- operational procedures and runbooks;
 - migrations;
-- non-obvious constraints.
+- architecture decisions;
+- non-obvious constraints and their reason.
+
+MUST NOT document what the code already states plainly. That doc rots first.
 
 ## README
 
-A repository README should normally include:
+Repo `README.md` MUST contain:
 
-- project purpose;
-- prerequisites;
+- project purpose, one paragraph;
+- prerequisites and runtime version;
 - installation;
 - local development;
-- tests;
+- the six check commands. See [CHECKS.md](CHECKS.md);
 - build;
-- important environment variables;
-- deployment entry point or reference;
+- required environment variables;
+- deployment entry point or link;
 - links to deeper documentation.
+
+Repo `AGENTS.md` MUST contain project facts and declared overrides. Shape: [../README.md](../README.md).
+
+## Keeping docs true
+
+- Behavior change MUST update affected docs in the same PR. See [PR.md](PR.md).
+- A doc contradicting the code is a defect. It MUST be fixed or deleted, not left standing.
+- MUST NOT leave a doc describing a removed feature.
+
+## Language
+
+Owner of the language rule for documentation and prose: this file.
+
+- Documentation, README files, and decision records MUST be written in English.
+- Commit messages: [GIT.md](GIT.md).
+- Code comments and user-facing product copy are a repo decision and MUST be stated in the repo's own `AGENTS.md`. A product shipping in Spanish with English comments is a normal, deliberate combination; what MUST NOT happen is leaving it unstated.
 
 ## Comments
 
-Use comments to explain why, not to restate obvious code.
+- Comment explains why, not what. SHOULD.
+- MUST NOT leave commented-out code. Git has history. See [GIT.md](GIT.md).
+- Stale comment MUST be updated or deleted with the code it describes.
+- Non-obvious workaround MUST carry a comment naming the cause, and a link to the issue when one exists.
 
-Avoid stale comments and commented-out code.
+## Decision records
+
+Architecture decision with lasting effect SHOULD get a short record under `docs/decisions/`.
+
+One record holds: context, decision, alternatives rejected, consequences. Keep it under one page.
+
+Superseded record MUST NOT be edited into a lie. Mark it superseded and link the replacement.
