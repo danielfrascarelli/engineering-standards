@@ -4,11 +4,16 @@ Central rules for every repository in this workspace.
 
 One source of truth. No copy/paste drift. Every repo consumes same rules.
 
+This repository is versioned, and it is pre-1.0: a MINOR release MAY break a consuming repo. Tags,
+release flow, and what counts as MAJOR here: [standards/RELEASES.md](standards/RELEASES.md). Released
+versions: [CHANGELOG.md](CHANGELOG.md).
+
 ## Layout
 
 ```text
 engineering-standards/
 ├── AGENTS.md                     # rules for AI agents and automated contributors
+├── CHANGELOG.md                  # released versions, updated in the release PR
 ├── README.md                     # this file: model, precedence, consumption
 ├── standards/
 │   ├── CHECKS.md                 # canonical validation check names
