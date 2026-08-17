@@ -55,19 +55,23 @@ Four top-level directories under `src/`:
 ```text
 src/modules/<feature>/    HTTP surface and domain logic
 src/data/                 persistence: ORM client, accessors, migrations
-src/common/               cross-cutting: guards, interceptors, decorators, config, errors
+src/<cross-cutting>/      guards, interceptors, decorators, config, errors
 src/observability/        tracing and error reporting, loaded before DI exists
 ```
 
-- Dependency direction MUST be `modules` to `data` to ORM. `common/` is importable from anywhere.
+- All four MUST exist, and a file MUST live in the directory whose role it matches.
+- Exactly one cross-cutting directory MUST exist. Its name SHOULD be `common/`, and whichever name a repo uses MUST be declared in that repo's `AGENTS.md` project-facts block. Splitting cross-cutting code across two directories MUST NOT happen: "where does this guard go" then has two answers, and both get used.
+- Note: the name is the repo's to pick because nothing depends on the string, while the four roles and the direction below are what the rest of this section rests on. A central name forces every repo whose layout predates this document to spend a declared override on a rename that changes no behavior, and an override list padded with cosmetic entries hides the ones that matter.
+- Dependency direction MUST be `modules` to `data` to ORM. The cross-cutting directory is importable from anywhere.
 - Feature module MUST NOT inject the ORM client directly. It goes through an accessor in `src/data/`. Health checks are the usual carve-out, and the carve-out MUST be written down where the rule is stated.
-- File name MUST be `<subject>.<role>.ts`, kebab-case. Roles: `.module.ts`, `.controller.ts`, `.service.ts`, `.dto.ts`, `.guard.ts`, `.interceptor.ts`, `.decorator.ts`, `.gateway.ts`, `.mapper.ts`, `.accessor.ts`, `.health-indicator.ts`.
+- File name MUST be `<subject>.<role>.ts`, kebab-case. A file whose role appears in this list MUST carry that role: `.module.ts`, `.controller.ts`, `.service.ts`, `.dto.ts`, `.guard.ts`, `.filter.ts`, `.pipe.ts`, `.interceptor.ts`, `.middleware.ts`, `.decorator.ts`, `.strategy.ts`, `.gateway.ts`, `.mapper.ts`, `.accessor.ts`, `.options.ts`, `.health-indicator.ts`, plus the test suffixes in [Testing](#testing).
+- The list is open. A file that is none of those — a pure function module, a type module, a pre-DI bootstrap file — MAY carry no role suffix, and a repo introducing a role of its own MUST make the suffix kebab-case and use it for every file of that role. Note: a closed list gives a file with no role in it the choice between a wrong suffix and a rule violation, and the wrong suffix is the one that gets picked.
 - One casing convention repo-wide. `LoginRequest.dto.ts` sitting beside `register.ts` MUST NOT happen.
-- Class suffix MUST match the file suffix.
+- The exported class name MUST contain the file's role token: `user.accessor.ts` exports `UserAccessor` or `UserAccessorService`, never `UserRepository`. Note: requiring the class to *end* in the role token instead collides with this framework's convention of suffixing every `@Injectable()` provider `Service`, and catches nothing that containment does not already catch.
 - DTOs MUST live in a `dto/` subfolder of their feature. One class per file.
 - MUST NOT create barrel `index.ts` files.
 - `paths` aliases MUST be declared in `tsconfig.json` and mirrored in the Jest `moduleNameMapper`. Relative imports climbing more than one directory MUST NOT be used.
-- Versioned HTTP surface MUST live at `src/modules/api/v<N>/<feature>/`, so URL version and directory version always agree.
+- A service serving more than one live API version MUST place its versioned HTTP surface at `src/modules/api/v<N>/<feature>/`, so URL version and directory version always agree. While exactly one version is live, feature modules MAY sit directly at `src/modules/<feature>/`, and the version MUST then be declared once, as `defaultVersion` in the bootstrap. Note: moving every module into `api/v1/` for a second version that does not exist yet is churn no reader benefits from, and the move is mechanical on the day the second version arrives.
 - A bidirectional module or provider dependency MUST be removed by extracting the shared provider or module. `@Global()` and `forwardRef()` MUST NOT be used to mask a cycle. `@Global()` only changes where exports are visible, and `forwardRef()` only defers resolution; neither removes the coupling that made the cycle, and both hide it from the next reader.
 - `forRootAsync` options factories MUST live in their own `*.options.ts` file. `AppModule` MUST NOT hold inline configuration objects.
 - One exported `configureApp(app)` MUST be shared by `main.ts`, the OpenAPI export script, and the e2e bootstrap. Global prefix and versioning duplicated across three files will drift, and the drift surfaces as tests asserting a response shape production never emits.
@@ -138,8 +142,8 @@ Leaving `forbidNonWhitelisted` unset silently strips unknown properties instead 
 - Every failure path MUST produce one uniform body: `{ statusCode, code, message }`. Validation errors, guard rejections, and unexpected errors included.
 - Pick one strategy per service and state it: typed result objects unwrapped by a global interceptor, or exceptions caught by a global filter. Both work. Mixing them MUST NOT happen.
 - Choosing the interceptor strategy MUST still register a global exception filter. Guards and pipes run before interceptors, so without a filter a guard rejection escapes with the framework's default shape and the API ships two incompatible error bodies on the same route.
-- Domain error codes MUST live in one enum with a companion `Record<ErrorCode, number>` status map. Status numbers MUST NOT be written at throw sites.
-- The status map MUST be covered by a test asserting no duplicate branch. A duplicated `case` silently makes one mapping dead code.
+- Domain error codes MUST live in one enum with a companion `Record<ErrorCode, number>` status map, written as an object literal and not as a `switch`. Status numbers MUST NOT be written at throw sites.
+- Note: the object literal needs no test to guard it. `Record<ErrorCode, number>` makes a missing code a compile error, and a repeated code a duplicate-key compile error. A `switch` expresses neither, which is why it is excluded rather than tested around.
 - An unmapped error MUST be replaced with a fixed generic 500 body, with the original logged server-side.
 - MUST NOT return stack traces, SQL, or upstream response bodies to a client.
 - The error tracker MUST be called from exactly one path, the unexpected-500 branch. Routine 4xx MUST NOT reach it.
@@ -176,7 +180,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Ne
 - Relaxing `sameSite` from `lax` or `strict` MUST come with a CSRF token on state-changing cookie-authenticated routes, in the same PR. A documented follow-up is not a control.
 - `helmet()` and an explicit `trust proxy` MUST be set in bootstrap.
 - CORS MUST come from an env-driven allowlist, with the same list passed to the WebSocket adapter. `origin: true` or `*` combined with `credentials: true` MUST NOT be used.
-- The rate-limit guard MUST be global, backed by a shared store when more than one instance runs. It MUST stay active in the test environment, or no test ever covers it.
+- The rate-limit guard MUST be global, backed by a shared store when more than one instance runs. At least one test MUST exercise the 429 path against the real guard; other suites MAY reset the store or override the guard. Note: disabled everywhere in tests, it is a control nothing covers; left globally active over a shared counter, it makes every suite order-dependent, and the first flake is answered by disabling it everywhere.
 - Swagger UI MUST NOT be served unauthenticated in production.
 
 ## Persistence
@@ -208,7 +212,7 @@ Mandatory rules live in [../standards/SECURITY.md](../standards/SECURITY.md). Ne
 
 ## Health and shutdown
 
-Three endpoints MUST exist, version-neutral, with the exposure each one is allowed:
+These endpoints MUST exist, version-neutral, with the exposure each one is allowed:
 
 | Route | Checks | Answers | Exposure |
 | --- | --- | --- | --- |
@@ -216,6 +220,7 @@ Three endpoints MUST exist, version-neutral, with the exposure each one is allow
 | `/health/ready` | datastore only | can it serve traffic | private |
 | `/health/dependencies` | external upstreams | is anything degraded | private |
 
+- `/health/dependencies` MAY be omitted by a service that makes no outbound third-party call. Note: with nothing to report on it answers the same thing `/health/ready` already does, and a second route saying "ok" about nothing is one more surface to keep private for no signal gained. The first outbound dependency brings the route with it.
 - `/health/live` MAY be public when the platform requires an unauthenticated probe, and MUST then return a status only — no dependency names, no versions, no error text.
 - `/health/ready` and `/health/dependencies` MUST be reachable only by orchestration, through network policy or authentication. Naming your upstreams and their current state to an unauthenticated caller hands over a map of what to attack and when it is already weak. See [../standards/SECURITY.md](../standards/SECURITY.md).
 - A degraded third party MUST NOT make the app report not-ready. Otherwise someone else's outage pulls the whole fleet out of the load balancer.
