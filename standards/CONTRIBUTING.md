@@ -20,6 +20,17 @@ Applies to humans and agents. Agents follow this file, then add the duties in [.
 
 Steps 3, 4, 5 are MUST. Skipping one needs a stated reason in the PR description.
 
+## Deleting files
+
+Applies to deletion run by hand in a working tree, by a human or an agent. Deletion written into a committed script, Dockerfile, or CI job is out of scope. See [DELIVERY.md](DELIVERY.md).
+
+- MUST delete with `gio trash <path>`. The file stays recoverable.
+- MUST NOT use `rm`, in any form.
+- `git clean` deletes without a trash step. MUST list with `git clean -nd` first, then trash what you meant to remove.
+- `gio` not available on the machine? Say so and ask. MUST NOT fall back to `rm`.
+
+Note: an untracked file removed by `rm` has no copy anywhere. Git protects committed content, not the working tree.
+
 ## Code quality
 
 Contribution MUST:
