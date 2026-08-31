@@ -91,6 +91,7 @@ Note: the tool that produced a change is not its author. A commit is written as 
 ## Forbidden
 
 - MUST NOT commit secrets. See [standards/SECURITY.md](standards/SECURITY.md).
+- MUST NOT delete a file with `rm`. See [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md), "Deleting files".
 - MUST NOT fabricate test results.
 - MUST NOT claim a command succeeded without running it.
 - MUST NOT disable tests to make build pass.

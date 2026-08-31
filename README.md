@@ -87,6 +87,7 @@ One topic, one owner file. Other files link. They MUST NOT restate.
 | PR size, description fields, review, approvals | [standards/PR.md](standards/PR.md) |
 | Test strategy, coverage stance | [standards/TESTING.md](standards/TESTING.md) |
 | Human contributor workflow | [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md) |
+| Deleting files in a working tree | [standards/CONTRIBUTING.md](standards/CONTRIBUTING.md) |
 | Read order, which documents apply to a change | this file, ["Read order"](#read-order) |
 | Local workspace setup, plugin install commands | [docs/workspace-setup.md](docs/workspace-setup.md) |
 | Agent-only rules | [AGENTS.md](AGENTS.md) |
